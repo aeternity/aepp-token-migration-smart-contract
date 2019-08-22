@@ -1,0 +1,12 @@
+contract TokenMigration =
+	type state = ()
+
+	entrypoint migrate(amountOfTokens: int, aeAddress: string, sig: string, h: string, leafIndex: int, siblings: string) =
+		require(verify(h, sig), "Invalid signature!")
+		transfer(aeAddress, amountOfTokens)
+		()
+
+	function verify(h: string, sig: string) : bool = true
+	function transfer(to: string, amount: int) = ()
+
+   // entrypoint some_func(name: string, age: int, friends: list(string)) = ()
