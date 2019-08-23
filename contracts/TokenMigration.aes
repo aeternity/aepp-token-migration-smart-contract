@@ -1,12 +1,61 @@
 contract TokenMigration =
-	type state = ()
 
-	entrypoint migrate(amountOfTokens: int, aeAddress: string, sig: string, h: string, leafIndex: int, siblings: string) =
-		require(verify(h, sig), "Invalid signature!")
-		transfer(aeAddress, amountOfTokens)
-		()
+    record state = 
+        { root_hash: string, 
+          temp_root: string,
+          index: int }
 
-	function verify(h: string, sig: string) : bool = true
-	function transfer(to: string, amount: int) = ()
+    entrypoint init(root_hash: string) : state = 
+        { root_hash = root_hash,
+          temp_root = root_hash,
+          index = 0 }
 
-   // entrypoint some_func(name: string, age: int, friends: list(string)) = ()
+    entrypoint migrate(amountOfTokens: int, aeAddress: string, sig: string, h: string, leafIndex: int, siblings: string) =
+        require(verify(h, sig), "Invalid signature!")
+        transfer(aeAddress, amountOfTokens)
+        ()
+
+    function verify(h: string, sig: string) : bool = true
+    function transfer(to: string, amount: int) = ()
+
+    stateful entrypoint containedInTree(ethAddr: string, tokens: string, i: int, siblings: list(string) ) =
+        let data = String.concat(ethAddr, ":")
+        let data = String.concat(data, tokens)
+        let data = Bytes.to_str(String.sha3(data)) // hash -> str
+        
+        put(state{temp_root = data})
+        put(state{index = i})
+        map_action(some_func, siblings)
+
+        (state.temp_root == state.root_hash)
+
+    stateful function map_action(f : 'a => 'b, l : list('a)) : list('b) =
+        switch(l)
+            [] => []
+            e :: l' => f(e) :: map_action(f, l')
+
+    stateful function some_func(el: string) =
+
+        if(state.index mod 2 == 1)
+            put(state{temp_root = Bytes.to_str(String.sha3(String.concat(el, state.temp_root)))})
+        else
+            put(state{temp_root = Bytes.to_str(String.sha3(String.concat(state.temp_root, el)))})
+
+        put(state{ index = state.index / 2 })
+
+        ()
+
+    // helpers
+    // entrypoint getHash(ethAddr: string, balance: string) =
+    //     let temp = String.concat(ethAddr, ":")
+    //     let temp = String.concat(temp, balance)
+    //     Bytes.to_str(String.sha3(temp))
+
+    // entrypoint genRoot(left: string, right: string) =
+    //     let temp = String.concat(left, right)
+    //     Bytes.to_str(String.sha3(temp))
+
+    // entrypoint genRoot2(left: string, right: string) =
+    //     let temp = String.concat(left, right)
+    //     let a = String.sha3(temp)
+    //     String.sha3(String.concat(Bytes.to_str(a), Bytes.to_str(a)) )

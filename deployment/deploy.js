@@ -15,11 +15,38 @@
  *  PERFORMANCE OF THIS SOFTWARE.
  */
 const Deployer = require('aeproject-lib').Deployer;
+// const AeSDK = require('@aeternity/aepp-sdk');
+// const Universal = AeSDK.Universal;
+// const fs = require('fs');
 
 const deploy = async (network, privateKey, compiler, networkId) => {
     let deployer = new Deployer(network, privateKey, compiler, networkId)
 
-    await deployer.deploy("./contracts/TokenMigration.aes")
+    const rootHash = "2A8E3173A64C1890CFD9E44EE3FB8C993FB2D3FB5FBF926812CA46DC925253AF";
+
+    const ethAddr = "0x18c4a229411ec44fc0ddfc7fd02e31fc1872a6e1".toLocaleLowerCase()
+    const tokens = "449437408529709982023680"
+    const index = 2345;
+     // !!! PS !!! =>> siblings should be passed in REVERSE ORDER
+     const siblings = [
+        "D28F693728229E4AF6A2C8D263E0F35BAB2B659CA98ADBB24F250017E8FEE16B",
+        "C8A76985CC36C37D79A33028537D7B5EBA04CFA51A1AB78E9C6ADCC7FDCBDA02",
+        "A8CA3099A8DF1D48E27D8A7C87440594E644C4816E6AA38C57D03FE8AFE8F88C",
+        "800079F085CA51B0BC4D0D2E5B22A2B0E3FBA899C6F3A7596D270EFB26367FCF",
+        "3AB5113A03BD541A704BFB24C1CE7BEFAF752DF088EF3C4BDEF7C936534E5647",
+        "70886EF10DBDF2FDB2CF145EC37BEE95E31BF9DA8444C924F03FFB8EAA63EF98",
+        "2FF80709DE5F2ED00142E2647E261A1CF934A0761CB8D14818199269B6E4ECB9",
+        "89C68E07F6887E0A9FB6F553A18752C6FB5F28ADAFE7E983B0B8342C93E136F2",
+        "62D2E1270D2BD08C51DA2E4A197540658553ACDB767B16AC55F28334C84C5553",
+        "A51C2763E3BA7671B9C8868E429FA52916E7FB34A41B471CBBE42703421F1307",
+        "C345D339283E1D15B77106B3D3C58C5980B37D4A69414EA634ECADC2CC889778",
+        "C74DEC9F3A5556F51D69201CC5C61B3BEE21E04451EEAE1E8590D6CE916FA431"
+    ]
+
+    let instance = await deployer.deploy("./contracts/TokenMigration.aes", [rootHash]);
+    let isValid = await instance.containedInTree(ethAddr, tokens, index, siblings.reverse());
+
+    console.log("is valid:", isValid.decodedResult);
 };
 
 module.exports = {
