@@ -1,0 +1,8 @@
+contract Test =
+    record state = 
+        { data: string }
+
+    entrypoint init(root_hash: string) : state = 
+        { data = root_hash }
+
+    entrypoint get() = state.data

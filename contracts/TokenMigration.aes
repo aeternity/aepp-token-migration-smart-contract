@@ -10,12 +10,19 @@ contract TokenMigration =
           temp_root = root_hash,
           index = 0 }
 
-    entrypoint migrate(amountOfTokens: int, aeAddress: string, sig: string, h: string, leafIndex: int, siblings: string) =
-        require(verify(h, sig), "Invalid signature!")
-        transfer(aeAddress, amountOfTokens)
-        ()
+    // stateful entrypoint migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), ethAddress: bytes(20), ethAddressAsStr: string) =
+    stateful entrypoint migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), ethAddress: bytes(20), ethAddressAsStr: string, sig: bytes(65), msgHash: hash) =
+        // working
+        //require(containedInTree(Bytes.to_str(ethAddress), amountOfTokens, leafIndex, siblings), "From provided data, cannot be generated same root!")
+
+        // require(verify(h, sig), "Invalid signature!")
+        require(Crypto.ecverify_secp256k1(msgHash, ethAddress, sig), "Invalid message signer!")
+
+        transfer(aeAddress, 5)
+        Bytes.to_str(ethAddress)
 
     function verify(h: string, sig: string) : bool = true
+
     function transfer(to: string, amount: int) = ()
 
     stateful entrypoint containedInTree(ethAddr: string, tokens: string, i: int, siblings: list(string) ) =
