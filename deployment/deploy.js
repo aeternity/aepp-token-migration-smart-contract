@@ -90,6 +90,8 @@ const deploy = async (network, privateKey, compiler, networkId) => {
     let result = await instance.deploy(['8CFCA1B9DDAB682EEE0CF097DADF553061A1731A325BD4A6E83FD0CA0F189F6D'])
     console.log("==> Contract was deployed to: ", result.address);
 
+    return
+
     let i = 0;
     const maxIteration = 1;
 

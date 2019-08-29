@@ -10,18 +10,21 @@ contract TokenMigration =
           temp_root = root_hash,
           index = 0 }
 
-    stateful entrypoint migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), ethAddress: bytes(20), sig: bytes(65), msgHash: hash) =
+    stateful entrypoint migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), eth_address: bytes(20), sig: bytes(65), msgHash: hash) =
 
-        require(containedInTree(Bytes.to_str(ethAddress), amountOfTokens, leafIndex, siblings), "From provided data, cannot be generated same root!")
+        require(containedInTree(Bytes.to_str(eth_address), amountOfTokens, leafIndex, siblings), "From provided data, cannot be generated same root!")
 
-        let recovered_address = getSigner(msgHash, sig) 
+        let recovered_address = getSigner(msgHash, sig)
+        let are_equal = switch (recovered_address)
+                            None => false
+                            Some(recovered) => recovered == eth_address
 
-        require(recovered_address == ethAddress, "Mismatch between passed eth address and recevored one!")
+        require(are_equal, "Mismatch between passed eth address and recevored one!")
 
         //  transfer(aeAddress, amountOfTokens)
         recovered_address
 
-    function getSigner(msgHash: hash, sig: bytes(65)) = // return signer address
+    entrypoint getSigner(msgHash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msgHash, sig)
 
     function transfer(to: string, amount: int) = ()
