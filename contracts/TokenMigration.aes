@@ -57,6 +57,10 @@ contract TokenMigration =
 
         ()
 
+    stateful function withdraw(amount: int) =
+        // only_owner()
+        amount
+
     // helpers
     // entrypoint getHash(ethAddr: string, balance: string) =
     //     let temp = String.concat(ethAddr, ":")
