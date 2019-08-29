@@ -63,74 +63,70 @@ const deploy = async (network, privateKey, compiler, networkId) => {
 
     const instance = await client.getContractInstance(contractSource);
 
-    const rootHash = "2A8E3173A64C1890CFD9E44EE3FB8C993FB2D3FB5FBF926812CA46DC925253AF";
-    const ethAddr = "0x18c4a229411ec44fc0ddfc7fd02e31fc1872a6e1".toUpperCase();
-    const tokens = "449437408529709982023680"
-    const index = 2345;
+    const rootHash = "74DF616B0BA7F0159B65617598A20244125BD887257C7C24F063B658EEE6370D";
+
+    // eth address that would sign message (token's owner)
+    const secretKey = '0x7d7ad7b1d16adb8b0312e60dff582e23616a307980de2ed90e76fb533817a1f1'
+
+    const ethAddr = "0xbc7cc79364ed7177d1673c15233db60adcd61e11".toUpperCase();
+    const tokens = "983047905794141508861952"
+    const leafIndex = 10;
 
      // !!! PS !!! =>> siblings should be passed in REVERSE order
      const siblings = [
-        "D28F693728229E4AF6A2C8D263E0F35BAB2B659CA98ADBB24F250017E8FEE16B",
-        "C8A76985CC36C37D79A33028537D7B5EBA04CFA51A1AB78E9C6ADCC7FDCBDA02",
-        "A8CA3099A8DF1D48E27D8A7C87440594E644C4816E6AA38C57D03FE8AFE8F88C",
-        "800079F085CA51B0BC4D0D2E5B22A2B0E3FBA899C6F3A7596D270EFB26367FCF",
-        "3AB5113A03BD541A704BFB24C1CE7BEFAF752DF088EF3C4BDEF7C936534E5647",
-        "70886EF10DBDF2FDB2CF145EC37BEE95E31BF9DA8444C924F03FFB8EAA63EF98",
-        "2FF80709DE5F2ED00142E2647E261A1CF934A0761CB8D14818199269B6E4ECB9",
-        "89C68E07F6887E0A9FB6F553A18752C6FB5F28ADAFE7E983B0B8342C93E136F2",
-        "62D2E1270D2BD08C51DA2E4A197540658553ACDB767B16AC55F28334C84C5553",
-        "A51C2763E3BA7671B9C8868E429FA52916E7FB34A41B471CBBE42703421F1307",
-        "C345D339283E1D15B77106B3D3C58C5980B37D4A69414EA634ECADC2CC889778",
-        "C74DEC9F3A5556F51D69201CC5C61B3BEE21E04451EEAE1E8590D6CE916FA431"
+        "7B5B82FD4EAFB8C98F35CE4E758FB39001BF5308E6122F9F65646F6192EA4395",
+        "F47D91E3E55C91B0044909ED0FD8E270BA88E932EF699562D1270F93092075D6",
+        "4C35F853AA3ED9F89CA14E35F8EE4208E62011549943FA71A3C58AE1A35A5B35",
+        "6A2BAF8A38980AADB210D0438D763D1A63851848971E4E1657E4E96AC4FA644C"
+        // "3AB5113A03BD541A704BFB24C1CE7BEFAF752DF088EF3C4BDEF7C936534E5647",
+        // "70886EF10DBDF2FDB2CF145EC37BEE95E31BF9DA8444C924F03FFB8EAA63EF98",
+        // "2FF80709DE5F2ED00142E2647E261A1CF934A0761CB8D14818199269B6E4ECB9",
+        // "89C68E07F6887E0A9FB6F553A18752C6FB5F28ADAFE7E983B0B8342C93E136F2",
+        // "62D2E1270D2BD08C51DA2E4A197540658553ACDB767B16AC55F28334C84C5553",
+        // "A51C2763E3BA7671B9C8868E429FA52916E7FB34A41B471CBBE42703421F1307",
+        // "C345D339283E1D15B77106B3D3C58C5980B37D4A69414EA634ECADC2CC889778",
+        // "C74DEC9F3A5556F51D69201CC5C61B3BEE21E04451EEAE1E8590D6CE916FA431"
     ]
 
     let aeAddress = 'ak_zPoY7cSHy2wBKFsdWJGXM7LnSjVt6cn1TWBDdRBUMC7Tur2NQ';
 
     console.log("==> ==> ==>");
-    let result = await instance.deploy(['8CFCA1B9DDAB682EEE0CF097DADF553061A1731A325BD4A6E83FD0CA0F189F6D'])
+    let result = await instance.deploy([rootHash])
     console.log("==> Contract was deployed to: ", result.address);
 
-    return
+    // return
 
     let i = 0;
     const maxIteration = 1;
 
     while (i < maxIteration) {
-        let signedInfo = await ethSignature();
 
-        console.log();
-        console.log("[PASSED] hashed msg:", signedInfo.hashedMSg, "| length:", signedInfo.hashedMSg.length);
-        console.log("[PASSED] signature:", signedInfo.signedMsg, "| length:", signedInfo.signedMsg.length);
-        console.log();
+        let signedInfo = await ethSignature(secretKey);
 
-        // let migrateRes = await instance.methods.migrate(tokens, aeAddress, index, siblings.reverse(), ethAsBytes, ethAddr, signatureAsBytes, digestAsBytes)
-        // console.log("is migrated:", migrateRes.decodedResult);
-    
-        // let getSigner = await instance.methods.getSigner(signedInfo.hashedMSg, signedInfo.signedMsg)
+        // [DEVELOP] check root hash
+        // let isValid = await instance.methods.containedInTree(ethAddr, tokens, leafIndex, siblings.reverse());
+        // console.log("is valid:", isValid.decodedResult);
+
+        // [DEVELOP] get signer from signature
+        // let getSigner = await instance.methods.getSigner(signedInfo.hashedMSg, signedInfo.signature)
         // console.log('signer addr:    >> ', signedInfo.address, ' <<');
         // console.log('recovered addr: >> ', getSigner.decodedResult, ' <<');
-    
-        // console.log('IS SIGNER:', signedInfo.address === getSigner.decodedResult);
-        // console.log('--------- END -------------');
-        // console.log();
 
-
-        if (!getSigner.decodedResult) {
-            console.log("iteration:", i);
-            break;
-        }
+        let migrateRes = await instance.methods.migrate(tokens, aeAddress, leafIndex, siblings.reverse(), ethAddr, ethAddr.substr(2), signedInfo.signature, signedInfo.hashedMSg)
+        console.log("Migration info:", migrateRes.decodedResult)
 
         i++
-    
-        
-    
-        // let isValid = await instance.methods.containedInTree(ethAddr, tokens, index, siblings.reverse());
-        // console.log("is valid:", isValid.decodedResult);
     }
 
-    async function ethSignature(){
+    async function ethSignature(secretKey){
         // WORKING EXAMPLE
-        let wallet = ethers.Wallet.createRandom();
+        let wallet;
+        if(!secretKey) {
+            wallet = ethers.Wallet.createRandom();
+        } else {
+            wallet = new ethers.Wallet(secretKey);
+        }
+
         const privateKey = wallet.signingKey.privateKey;
         const publicKey = wallet.signingKey.publicKey;
         const address = wallet.signingKey.address;
@@ -165,7 +161,7 @@ const deploy = async (network, privateKey, compiler, networkId) => {
 
         let result = {
             hashedMSg: messageDigest.substr(2),
-            signedMsg,
+            signature: signedMsg,
             address
         }
 
@@ -175,26 +171,6 @@ const deploy = async (network, privateKey, compiler, networkId) => {
     }
 };
 
-
-
 module.exports = {
     deploy
 };
-
-// working example: sign message && verify signer
-/**
-    let wallet = ethers.Wallet.createRandom();
-    const privateKey = wallet.signingKey.privateKey;
-    const publicKey = wallet.signingKey.publicKey;
-    const address = wallet.signingKey.address;
-
-    // message
-    let message = "Hello World";
-    let messageBytes = ethers.utils.toUtf8Bytes(message);
-    let signMsg = await wallet.signMessage(message);
-
-    let recovered = await ethers.utils.verifyMessage(messageBytes, signMsg)
-
-   console.log("is signer", recovered === address);
-
- */

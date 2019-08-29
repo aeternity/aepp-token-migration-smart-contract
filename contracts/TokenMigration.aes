@@ -10,9 +10,12 @@ contract TokenMigration =
           temp_root = root_hash,
           index = 0 }
 
-    stateful entrypoint migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), eth_address: bytes(20), sig: bytes(65), msgHash: hash) =
+    // eth_addr_str = "0XSDFDE%HGEH" uppercase eth addr
+    stateful entrypoint migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msgHash: hash) =
 
-        require(containedInTree(Bytes.to_str(eth_address), amountOfTokens, leafIndex, siblings), "From provided data, cannot be generated same root!")
+        // why this does not work? 
+        // require(containedInTree(String.concat("0X", Bytes.to_str(eth_address)), amountOfTokens, leafIndex, siblings), "From provided data, cannot be generated same root!")
+        require(containedInTree(eth_addr_str, amountOfTokens, leafIndex, siblings), "From provided data, cannot be generated same root!")
 
         let recovered_address = getSigner(msgHash, sig)
         let are_equal = switch (recovered_address)
@@ -22,7 +25,7 @@ contract TokenMigration =
         require(are_equal, "Mismatch between passed eth address and recevored one!")
 
         //  transfer(aeAddress, amountOfTokens)
-        recovered_address
+        (recovered_address, eth_address)
 
     entrypoint getSigner(msgHash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msgHash, sig)
