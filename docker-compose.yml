@@ -13,6 +13,7 @@ services:
       - ./docker/aeternity_node1_mean15.yaml:/home/epoch/epoch.yaml
       - ./docker/keys/node1:/home/epoch/node/keys
       - node1_db:/home/epoch/node/data/mnesia
+      - ./docker/logs:/home/aeternity/node/log
 
   node2:
     image: aeternity/aeternity:v5.0.0-rc.1
@@ -26,6 +27,7 @@ services:
       - ./docker/aeternity_node2_mean15.yaml:/home/epoch/epoch.yaml
       - ./docker/keys/node2:/home/epoch/node/keys
       - node2_db:/home/epoch/node/data/mnesia
+      - ./docker/logs:/home/aeternity/node/log
 
   node3:
     image: aeternity/aeternity:v5.0.0-rc.1
@@ -39,6 +41,7 @@ services:
       - ./docker/aeternity_node3_mean15.yaml:/home/epoch/epoch.yaml
       - ./docker/keys/node3:/home/epoch/node/keys
       - node3_db:/home/epoch/node/data/mnesia
+      - ./docker/logs:/home/aeternity/node/log
 
   proxy:
     image: nginx:1.13.8

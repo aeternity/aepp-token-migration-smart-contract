@@ -19,7 +19,7 @@ const Deployer = require('aeproject-lib').Deployer;
 const AeSDK = require('@aeternity/aepp-sdk');
 const Universal = AeSDK.Universal;
 const Node = AeSDK.Node;
-const toBytes = AeSDK.Bytes.toBytes;
+// const toBytes = AeSDK.Bytes.toBytes;
 
 const ethers = require('ethers');
 const fs = require('fs');
@@ -29,10 +29,12 @@ const deploy = async (network, privateKey, compiler, networkId) => {
 
     let net = {};
     net.url = 'http://localhost:3001';
-    net.internalUrl = 'http://localhost:3001/internal';
+    net.internalUrl = net.url +'/internal';
     net.networkId = "ae_devnet";
     net.compilerUrl = 'http://localhost:3080';
+
     const contractSource = fs.readFileSync('./contracts/TokenMigration.aes', 'utf8'); 
+    // const contractSource = fs.readFileSync('./cont/test.aes', 'utf8'); 
 
     let moneyKeyPair = { 
         publicKey: "ak_2mwRmUeYmfuW93ti9HMSUJzCk1EYcQEfikVSzgo6k2VghsWhgU",
@@ -59,36 +61,10 @@ const deploy = async (network, privateKey, compiler, networkId) => {
         forceCompatibility: true
     })
 
-    let source = fs.readFileSync('./contracts/TokenMigration.aes', 'utf8');
-// source = `
-// contract Test =
-//   record state = 
-//     { data: string }
-
-//   entrypoint init(root_hash: string) : state = 
-//     { data = root_hash }
-
-//   entrypoint get() = state.data`
-
-    const instance = await client.getContractInstance(source);
-
-    console.log("==> instance <--");
-    // console.log(instance);
-
-// \"contract TokenMigration =\n  type state = ()\n  entrypoint hello(x: string) = x\"
-    // curl -H "Content-Type: application/json" -d "{\"code\":\"contract TokenMigration =\n  type state = ()\n  entrypoint hello(x: string) = x\",\"options\":{\"backend\":\"aevm\"}}" -X POST http://localhost:3080/compile
-
-    // curl -H "Content-Type: application/json" -d "{\"code\":\"contract TokenMigration =\n  type state = ()\n  entrypoint hello(x: string) = x\",\"options\":{\"backend\":\"aevm\"}}" -X POST http://localhost:3080/compile
-    // curl -H "Content-Type: application/json" -d "{\"code\":\"contract TokenMigration =\n  record state = {data: int}\n  entrypoint init() = { data = 5}\n  entrypoint hello(x: string) = x\",\"options\":{\"backend\":\"aevm\"}}" -X POST http://localhost:3080/compile
-
-    // curl -H "Content-Type: application/json" -d "{\"function\":\"init\",\"arguments\":[\"\\\"my string\\\"\"],\"source\":\"contract Test =\n  record state = {data: string}\n  entrypoint init(x: string) = {data = x}\n  entrypoint hello(x: int) = x\",\"options\":{\"backend\":\"aevm\"}}" -X POST http://localhost:3080/encode-calldata
-
-    // let result = await instance.deploy([rootHash], {})
-    // console.log("Contract was deployed to: ", result.address);
+    const instance = await client.getContractInstance(contractSource);
 
     const rootHash = "2A8E3173A64C1890CFD9E44EE3FB8C993FB2D3FB5FBF926812CA46DC925253AF";
-
-    const ethAddr = "0x18c4a229411ec44fc0ddfc7fd02e31fc1872a6e1".toLocaleLowerCase()
+    const ethAddr = "0x18c4a229411ec44fc0ddfc7fd02e31fc1872a6e1".toUpperCase();
     const tokens = "449437408529709982023680"
     const index = 2345;
 
@@ -111,69 +87,89 @@ const deploy = async (network, privateKey, compiler, networkId) => {
     let aeAddress = 'ak_zPoY7cSHy2wBKFsdWJGXM7LnSjVt6cn1TWBDdRBUMC7Tur2NQ';
 
     console.log("==> ==> ==>");
-    let result = await instance.deploy(['2A8E3173A64C1890CFD9E44EE3FB8C993FB2D3FB5FBF926812CA46DC925253AF'])
+    let result = await instance.deploy(['8CFCA1B9DDAB682EEE0CF097DADF553061A1731A325BD4A6E83FD0CA0F189F6D'])
     console.log("==> Contract was deployed to: ", result.address);
 
-    // console.log('->', toBytes(ethAddr).length);
-    // console.log('->', Buffer.from(ethAddr).toString('hex'));
+    let i = 0;
+    const maxIteration = 1;
 
-    let ethAsBytes = toBytes(ethAddr.substr(2));
-    // let ethAsBytes = toBytes(ethAddr).substr(2);
-    // let ethAsBytes = Buffer.from(ethAddr.substr(2)).toString('hex')
-    console.log('ethAsBytes:', ethAsBytes);
-    console.log('length', ethAsBytes.length);
+    while (i < maxIteration) {
+        let signedInfo = await ethSignature();
 
-    let aa = await ethSignature();
+        console.log();
+        console.log("[PASSED] hashed msg:", signedInfo.hashedMSg, "| length:", signedInfo.hashedMSg.length);
+        console.log("[PASSED] signature:", signedInfo.signedMsg, "| length:", signedInfo.signedMsg.length);
+        console.log();
 
-    let signMsgAsBytes = toBytes(aa.signMsg.substr(2))
-    let digestAsBytes = toBytes(aa.digest.substr(2))
+        // let migrateRes = await instance.methods.migrate(tokens, aeAddress, index, siblings.reverse(), ethAsBytes, ethAddr, signatureAsBytes, digestAsBytes)
+        // console.log("is migrated:", migrateRes.decodedResult);
+    
+        // let getSigner = await instance.methods.getSigner(signedInfo.hashedMSg, signedInfo.signedMsg)
+        // console.log('signer addr:    >> ', signedInfo.address, ' <<');
+        // console.log('recovered addr: >> ', getSigner.decodedResult, ' <<');
+    
+        // console.log('IS SIGNER:', signedInfo.address === getSigner.decodedResult);
+        // console.log('--------- END -------------');
+        // console.log();
 
 
-    // let instance = await deployer.deploy("./contracts/TokenMigration.aes", [rootHash]);
+        if (!getSigner.decodedResult) {
+            console.log("iteration:", i);
+            break;
+        }
 
-    // migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), ethAddress: bytes(20), sig: bytes(65), msgHash: hash) =
-    let migrateRes = await instance.methods.migrate(tokens, aeAddress, index, siblings.reverse(), ethAsBytes, ethAddr, signMsgAsBytes, digestAsBytes)
-    console.log("is migrated:", migrateRes.decodedResult);
-
-    // let isValid = await instance.methods.containedInTree(ethAddr, tokens, index, siblings.reverse());
-    // console.log("is valid:", isValid.decodedResult);
+        i++
+    
+        
+    
+        // let isValid = await instance.methods.containedInTree(ethAddr, tokens, index, siblings.reverse());
+        // console.log("is valid:", isValid.decodedResult);
+    }
 
     async function ethSignature(){
+        // WORKING EXAMPLE
         let wallet = ethers.Wallet.createRandom();
         const privateKey = wallet.signingKey.privateKey;
         const publicKey = wallet.signingKey.publicKey;
         const address = wallet.signingKey.address;
-    
-        console.log()
-        console.log("_________________________________");
-        console.log("privateKey", privateKey);
-        console.log("publicKey", publicKey);
-        console.log("address", address);
-        console.log()
-    
-    
+
+        console.log();
+        console.log('--------- START -----------');
+        console.log('address:', address);
+        console.log('privateKey:', privateKey);
+        console.log();
+
         // message
-        let message = "Hello World";
+        let message = "world";
+        
         let messageBytes = ethers.utils.toUtf8Bytes(message);
+        let signedMsg = await wallet.signMessage(message);
+
         let messageDigest = ethers.utils.keccak256(messageBytes);
-        console.log("Digest: " + messageDigest);
-    
-        // signing
+        // The hash we wish to sign and verify https://docs.ethers.io/ethers.js/html/cookbook-signing.html#id4
+        // let hashedMsg = ethers.utils.id(message); // same as 'messageDigest'
+
+
+        let recovered = await ethers.utils.verifyMessage(messageBytes, signedMsg)
+        if (recovered !== address) {
+            throw Error("Invalid signer!")
+        }
+
         let signingKey = new ethers.utils.SigningKey(privateKey);
         let signature = signingKey.signDigest(messageDigest);
-        let signMsg = await wallet.signMessage(messageBytes);
-    
-        console.log("sign digest", signature);
-        console.log("signed msg", sig);
-        console.log("signed msg length", sig.length);
-        console.log("_________________________________");
-        console.log()
 
-        return {
-            digest: messageDigest,
-            signDigest, 
-            signMsg
+        signedMsg = (signature.v == 27 ? '1b' : '1c') + signature.r.substr(2) + signature.s.substr(2)
+ 
+
+        let result = {
+            hashedMSg: messageDigest.substr(2),
+            signedMsg,
+            address
         }
+
+
+
+        return result
     }
 };
 
@@ -182,3 +178,21 @@ const deploy = async (network, privateKey, compiler, networkId) => {
 module.exports = {
     deploy
 };
+
+// working example: sign message && verify signer
+/**
+    let wallet = ethers.Wallet.createRandom();
+    const privateKey = wallet.signingKey.privateKey;
+    const publicKey = wallet.signingKey.publicKey;
+    const address = wallet.signingKey.address;
+
+    // message
+    let message = "Hello World";
+    let messageBytes = ethers.utils.toUtf8Bytes(message);
+    let signMsg = await wallet.signMessage(message);
+
+    let recovered = await ethers.utils.verifyMessage(messageBytes, signMsg)
+
+   console.log("is signer", recovered === address);
+
+ */

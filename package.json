@@ -9,9 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aeternity/aepp-sdk": "4.5.1",
+    "@aeternity/aepp-sdk": "git://github.com/aeternity/aepp-sdk-js.git#feat/compiler-4.0.0-compatibility",
     "aeproject-lib": "0.0.2",
     "ethers": "^4.0.36",
+    "web3": "^1.2.1",
     "yarn": "1.17.3"
   }
 }
