@@ -90,7 +90,7 @@ const deploy = async (network, privateKey, compiler, networkId) => {
 
     let aeAddress = 'ak_zPoY7cSHy2wBKFsdWJGXM7LnSjVt6cn1TWBDdRBUMC7Tur2NQ';
 
-    console.log("==> ==> ==>");
+    // console.log("==> ==> ==>");
     let result = await instance.deploy([rootHash])
     console.log("==> Contract was deployed to: ", result.address);
 
@@ -156,12 +156,12 @@ const deploy = async (network, privateKey, compiler, networkId) => {
         let signingKey = new ethers.utils.SigningKey(privateKey);
         let signature = signingKey.signDigest(messageDigest);
 
-        signedMsg = (signature.v == 27 ? '1b' : '1c') + signature.r.substr(2) + signature.s.substr(2)
+        sig = (signature.v == 27 ? '1b' : '1c') + signature.r.substr(2) + signature.s.substr(2)
  
 
         let result = {
             hashedMSg: messageDigest.substr(2),
-            signature: signedMsg,
+            signature: sig,
             address
         }
 

@@ -10,7 +10,7 @@ contract TokenMigration =
           temp_root = root_hash,
           index = 0 }
 
-    // eth_addr_str = "0XSDFDE%HGEH" uppercase eth addr
+    // eth_addr_str = "0XSDFDEHGEH" uppercase eth addr
     stateful entrypoint migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msgHash: hash) =
 
         // why this does not work? 
