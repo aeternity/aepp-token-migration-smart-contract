@@ -112,8 +112,19 @@ const deploy = async (network, privateKey, compiler, networkId) => {
         // console.log('signer addr:    >> ', signedInfo.address, ' <<');
         // console.log('recovered addr: >> ', getSigner.decodedResult, ' <<');
 
-        let migrateRes = await instance.methods.migrate(tokens, aeAddress, leafIndex, siblings.reverse(), ethAddr, ethAddr.substr(2), signedInfo.signature, signedInfo.hashedMSg)
-        console.log("Migration info:", migrateRes.decodedResult)
+        console.log(ethAddr.substr(2))
+
+        // let migrateRes = await instance.methods.migrate(tokens, aeAddress, leafIndex, siblings.reverse(), ethAddr, ethAddr.substr(2), signedInfo.signature, signedInfo.hashedMSg)
+        let migrateRes = await instance.methods.migrate(
+            "983047905794141508861952", 
+            "ak_zPoY7cSHy2wBKFsdWJGXM7LnSjVt6cn1TWBDdRBUMC7Tur2NQ", 
+            10, 
+            ["6A2BAF8A38980AADB210D0438D763D1A63851848971E4E1657E4E96AC4FA644C","4C35F853AA3ED9F89CA14E35F8EE4208E62011549943FA71A3C58AE1A35A5B35","F47D91E3E55C91B0044909ED0FD8E270BA88E932EF699562D1270F93092075D6","7B5B82FD4EAFB8C98F35CE4E758FB39001BF5308E6122F9F65646F6192EA4395"], 
+            "0XBC7CC79364ED7177D1673C15233DB60ADCD61E11", 
+            "0XBC7CC79364ED7177D1673C15233DB60ADCD61E11".substr(2), 
+            "1c2222b0291e085c2c0d49116f5c912888ad861a75f4a4d1406b2d10f8d1881ed11e436f84f0ea19fe05052d64a9eff4f90bb722af3898bc639202193c83091da1", 
+            "8452c9b9140222b08593a26daa782707297be9f7b3e8281d7b4974769f19afd0")
+        console.log("Migration info:", migrateRes)
 
         i++
     }
@@ -164,8 +175,6 @@ const deploy = async (network, privateKey, compiler, networkId) => {
             signature: sig,
             address
         }
-
-
 
         return result
     }

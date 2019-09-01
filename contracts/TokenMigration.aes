@@ -24,13 +24,13 @@ contract TokenMigration =
 
         require(are_equal, "Mismatch between passed eth address and recevored one!")
 
-        //  transfer(aeAddress, amountOfTokens)
+        //  tr(aeAddress, amountOfTokens)
         (recovered_address, eth_address)
 
     entrypoint getSigner(msgHash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msgHash, sig)
 
-    function transfer(to: string, amount: int) = ()
+    function tr(to: string, amount: int) = ()
 
     stateful entrypoint containedInTree(ethAddr: string, tokens: string, i: int, siblings: list(string) ) =
         let data = String.concat(ethAddr, ":")
