@@ -28,7 +28,7 @@ contract TokenMigration =
 
         put(state{migrations_count = state.migrations_count + 1})
         //  tr(aeAddress, amountOfTokens)
-        (state.migrations_count, recovered_address, eth_address)
+        state.migrations_count
 
     entrypoint getSigner(msgHash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msgHash, sig)
