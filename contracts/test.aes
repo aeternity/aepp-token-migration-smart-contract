@@ -1,0 +1,19 @@
+
+contract TokenMigration =
+
+    record state = 
+        { root_hash: string, 
+          temp_root: string,
+          index: int }
+
+    entrypoint init(root_hash: string) : state = 
+        { root_hash = root_hash,
+          temp_root = root_hash,
+          index = 0 }
+
+    // eth_addr_str = "0XSDFDEHGEH" uppercase eth addr
+    // stateful entrypoint migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msgHash: hash) =
+    //     4
+
+    stateful entrypoint migrate(msgHash: string) =
+        4

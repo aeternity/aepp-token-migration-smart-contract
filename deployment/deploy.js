@@ -34,6 +34,7 @@ const deploy = async (network, privateKey, compiler, networkId) => {
     net.compilerUrl = 'http://localhost:3080';
 
     const contractSource = fs.readFileSync('./contracts/TokenMigration.aes', 'utf8'); 
+    // const contractSource = fs.readFileSync('./contracts/test.aes', 'utf8'); 
     // const contractSource = fs.readFileSync('./cont/test.aes', 'utf8'); 
 
     let moneyKeyPair = { 
@@ -91,7 +92,7 @@ const deploy = async (network, privateKey, compiler, networkId) => {
     let aeAddress = 'ak_zPoY7cSHy2wBKFsdWJGXM7LnSjVt6cn1TWBDdRBUMC7Tur2NQ';
 
     // console.log("==> ==> ==>");
-    let result = await instance.deploy([rootHash])
+    let result = await instance.deploy([ rootHash, 0 ])
     console.log("==> Contract was deployed to: ", result.address);
 
     // return
@@ -124,7 +125,8 @@ const deploy = async (network, privateKey, compiler, networkId) => {
             "0XBC7CC79364ED7177D1673C15233DB60ADCD61E11".substr(2), 
             "1c2222b0291e085c2c0d49116f5c912888ad861a75f4a4d1406b2d10f8d1881ed11e436f84f0ea19fe05052d64a9eff4f90bb722af3898bc639202193c83091da1", 
             "8452c9b9140222b08593a26daa782707297be9f7b3e8281d7b4974769f19afd0")
-        console.log("Migration info:", migrateRes)
+        
+            // console.log("Migration info:", migrateRes)
 
         i++
     }

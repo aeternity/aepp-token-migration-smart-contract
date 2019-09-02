@@ -3,11 +3,13 @@ contract TokenMigration =
     record state = 
         { root_hash: string, 
           temp_root: string,
+          migrations_count: int,
           index: int }
 
-    entrypoint init(root_hash: string) : state = 
+    entrypoint init(root_hash: string, count: int) : state = 
         { root_hash = root_hash,
           temp_root = root_hash,
+          migrations_count = count,
           index = 0 }
 
     // eth_addr_str = "0XSDFDEHGEH" uppercase eth addr
@@ -24,11 +26,14 @@ contract TokenMigration =
 
         require(are_equal, "Mismatch between passed eth address and recevored one!")
 
+        put(state{migrations_count = state.migrations_count + 1})
         //  tr(aeAddress, amountOfTokens)
-        (recovered_address, eth_address)
+        (state.migrations_count, recovered_address, eth_address)
 
     entrypoint getSigner(msgHash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msgHash, sig)
+
+    entrypoint get_migrations_count() = state.migrations_count
 
     function tr(to: string, amount: int) = ()
 
