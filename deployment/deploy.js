@@ -19,7 +19,8 @@ const Deployer = require('aeproject-lib').Deployer;
 const AeSDK = require('@aeternity/aepp-sdk');
 const Universal = AeSDK.Universal;
 const Node = AeSDK.Node;
-// const toBytes = AeSDK.Bytes.toBytes;
+const crypto = AeSDK.Crypto;
+const toBytes = AeSDK.Bytes.toBytes;
 
 const ethers = require('ethers');
 const fs = require('fs');
@@ -42,11 +43,6 @@ const deploy = async (network, privateKey, compiler, networkId) => {
         secretKey: "bb9f0b01c8c9553cfbaf7ef81a50f977b1326801ebf7294d1c2cbccdedf27476e9bbf604e611b5460a3b3999e9771b6f60417d73ce7c5519e12f7e127a1225ca" 
     }
 
-
-    // let keyPair = await crypto.generateKeyPair();
-    // console.log(keyPair);
-    // console.log(Node);
-
     const node = await Node({ url: net.url, internalUrl: net.internalUrl, forceCompatibility: true })
     const client = await Universal({
         // url: net.url,
@@ -62,23 +58,36 @@ const deploy = async (network, privateKey, compiler, networkId) => {
         forceCompatibility: true
     })
 
+    let keyPair = await crypto.generateKeyPair();
+    // console.log(keyPair);
+    // console.log(Node);
+    
+    // let spendRes = await client.spend(1, keyPair.publicKey)
+    
+    // console.log("----- spend tx ------");
+    // console.log(spendRes);
+    // console.log();
+
+
     const instance = await client.getContractInstance(contractSource);
 
-    const rootHash = "74DF616B0BA7F0159B65617598A20244125BD887257C7C24F063B658EEE6370D";
+    const rootHash = "39535EE4CA0870495A63034FB62857115B1D2DB04D71A229C93B18E59933729A";
 
     // eth address that would sign message (token's owner)
-    const secretKey = '0x7d7ad7b1d16adb8b0312e60dff582e23616a307980de2ed90e76fb533817a1f1'
+    const secretKey = '0xcbae6bb63d6466f214d50e24c5c483834bd0cc52f78c69b0a467dc273c6c3a14'
 
-    const ethAddr = "0xbc7cc79364ed7177d1673c15233db60adcd61e11".toUpperCase();
-    const tokens = "983047905794141508861952"
-    const leafIndex = 10;
+    const ethAddr = "0x20b9BD8fBf8520E141e937D42F514305704bC4E2".toUpperCase();
+    const tokens = "3797337559826489344"
+                //  1000000000000000000 = 1AE
+    const leafIndex = 25;
 
      // !!! PS !!! =>> siblings should be passed in REVERSE order
      const siblings = [
-        "7B5B82FD4EAFB8C98F35CE4E758FB39001BF5308E6122F9F65646F6192EA4395",
-        "F47D91E3E55C91B0044909ED0FD8E270BA88E932EF699562D1270F93092075D6",
-        "4C35F853AA3ED9F89CA14E35F8EE4208E62011549943FA71A3C58AE1A35A5B35",
-        "6A2BAF8A38980AADB210D0438D763D1A63851848971E4E1657E4E96AC4FA644C"
+        "A216AC75AE5818D78F6CCD35C34331EDE119CA5BA40089FA6B0AF98A652F1988",
+        "4412DABEB9B4565C487AE17C1EE837D3804BC36EE1942F2A5B6C9C987DAC2C40",
+        "2B09C8F74F3DB795689AAF1DB8C2A52E2EB5ACE15CA0FE43F3EFBE3AE276F570",
+        "BC2DBEBEA7A5C6B40ABF87D2C299218EFA12981C246A1D44F83D61C2B683A4CA",
+        "DE1E73DC0453EBD5A68D45F85D5341DE9BE4AD8CC244D90022B1D1F7FE0657CC"
         // "3AB5113A03BD541A704BFB24C1CE7BEFAF752DF088EF3C4BDEF7C936534E5647",
         // "70886EF10DBDF2FDB2CF145EC37BEE95E31BF9DA8444C924F03FFB8EAA63EF98",
         // "2FF80709DE5F2ED00142E2647E261A1CF934A0761CB8D14818199269B6E4ECB9",
@@ -87,13 +96,21 @@ const deploy = async (network, privateKey, compiler, networkId) => {
         // "A51C2763E3BA7671B9C8868E429FA52916E7FB34A41B471CBBE42703421F1307",
         // "C345D339283E1D15B77106B3D3C58C5980B37D4A69414EA634ECADC2CC889778",
         // "C74DEC9F3A5556F51D69201CC5C61B3BEE21E04451EEAE1E8590D6CE916FA431"
-    ]
+    ].reverse()
 
-    let aeAddress = 'ak_zPoY7cSHy2wBKFsdWJGXM7LnSjVt6cn1TWBDdRBUMC7Tur2NQ';
+    let aeAddress = keyPair.publicKey;
 
     // console.log("==> ==> ==>");
     let result = await instance.deploy([ rootHash, 0 ])
     console.log("==> Contract was deployed to: ", result.address);
+
+    // let temp = await client.balance(moneyKeyPair.publicKey)
+    // console.log("Funder Balance:", temp);
+
+    // FUNDING CONTACT
+    let deposit = 10 * 1000000000000000000; // N * 1 AE
+    let depositRes = await instance.methods.deposit({ amount: deposit })
+    console.log("contract was funded with:", depositRes.decodedResult)
 
     // return
 
@@ -113,20 +130,57 @@ const deploy = async (network, privateKey, compiler, networkId) => {
         // console.log('signer addr:    >> ', signedInfo.address, ' <<');
         // console.log('recovered addr: >> ', getSigner.decodedResult, ' <<');
 
-        console.log(ethAddr.substr(2))
-
-        // let migrateRes = await instance.methods.migrate(tokens, aeAddress, leafIndex, siblings.reverse(), ethAddr, ethAddr.substr(2), signedInfo.signature, signedInfo.hashedMSg)
-        let migrateRes = await instance.methods.migrate(
-            "983047905794141508861952", 
-            "ak_zPoY7cSHy2wBKFsdWJGXM7LnSjVt6cn1TWBDdRBUMC7Tur2NQ", 
-            10, 
-            ["6A2BAF8A38980AADB210D0438D763D1A63851848971E4E1657E4E96AC4FA644C","4C35F853AA3ED9F89CA14E35F8EE4208E62011549943FA71A3C58AE1A35A5B35","F47D91E3E55C91B0044909ED0FD8E270BA88E932EF699562D1270F93092075D6","7B5B82FD4EAFB8C98F35CE4E758FB39001BF5308E6122F9F65646F6192EA4395"], 
-            "0XBC7CC79364ED7177D1673C15233DB60ADCD61E11", 
-            "0XBC7CC79364ED7177D1673C15233DB60ADCD61E11".substr(2), 
-            "1c2222b0291e085c2c0d49116f5c912888ad861a75f4a4d1406b2d10f8d1881ed11e436f84f0ea19fe05052d64a9eff4f90bb722af3898bc639202193c83091da1", 
-            "8452c9b9140222b08593a26daa782707297be9f7b3e8281d7b4974769f19afd0")
         
-            // console.log("Migration info:", migrateRes)
+        // transfer
+        // let transferRes = await instance.methods.transfer(
+        //     aeAddress,
+        //     depositRes.decodedResult / 10)
+
+        // console.log("transferRes info:", transferRes)
+
+
+        // migrate(amount_of_tokens: int, ae_address: address, leaf_index: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msg_hash: hash) =
+        // let migrateRes = await instance.methods.migrate(
+        //     tokens, // "983047905794141508861952", 
+        //     // toBytes("3797337559826489344"), // "983047905794141508861952", 
+        //     aeAddress, 
+        //     25, 
+        //     [
+        //         "A216AC75AE5818D78F6CCD35C34331EDE119CA5BA40089FA6B0AF98A652F1988",
+        //         "4412DABEB9B4565C487AE17C1EE837D3804BC36EE1942F2A5B6C9C987DAC2C40",
+        //         "2B09C8F74F3DB795689AAF1DB8C2A52E2EB5ACE15CA0FE43F3EFBE3AE276F570",
+        //         "BC2DBEBEA7A5C6B40ABF87D2C299218EFA12981C246A1D44F83D61C2B683A4CA",
+        //         "DE1E73DC0453EBD5A68D45F85D5341DE9BE4AD8CC244D90022B1D1F7FE0657CC"
+        //     ], 
+        //     "0x20b9BD8fBf8520E141e937D42F514305704bC4E2".toUpperCase(), 
+        //     "0x20b9BD8fBf8520E141e937D42F514305704bC4E2".toUpperCase().substr(2), 
+        //     "1ed7455938efdaa0709d8de24eba5b62dd2f035e82e7e46ff0a104972ec2266402663f8cbab895cc0791303c566c29b770d6730f077361b82d37b4c18987653e1c", 
+        //     "8452c9b9140222b08593a26daa782707297be9f7b3e8281d7b4974769f19afd0")
+
+        console.log();
+        console.log({
+            tokens, // "983047905794141508861952", 
+            aeAddress, 
+            leafIndex, 
+            siblings: siblings, 
+            ethAddr, 
+            ethAddr: ethAddr.substr(2), 
+            sig: signedInfo.signature, 
+            hashMsg: signedInfo.hashedMSg
+        });
+        console.log();
+
+        let migrateRes = await instance.methods.migrate(
+            tokens, // "983047905794141508861952", 
+            aeAddress, 
+            leafIndex, 
+            siblings, // already reversed !!!! 
+            ethAddr, 
+            ethAddr.substr(2), 
+            signedInfo.signature, 
+            signedInfo.hashedMSg)
+        
+        console.log("Migration info:", migrateRes)
 
         i++
     }

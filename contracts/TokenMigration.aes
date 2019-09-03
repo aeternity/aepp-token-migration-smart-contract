@@ -15,10 +15,11 @@ payable contract TokenMigration =
           map_index = {} }
 
     // eth_addr_str = "0XSDFDEHGEH" uppercase eth addr
-    stateful entrypoint migrate(amount_of_tokens: int, ae_address: address, leaf_index: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msg_hash: hash) =
+    payable stateful entrypoint migrate(amount_of_tokens: int, ae_address: address, leaf_index: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msg_hash: hash) =
 
         // why this does not work? 
         // require(contained_in_merkle_tree(String.concat("0X", Bytes.to_str(eth_address)), amount_of_tokens, leaf_index, siblings), "From provided data, cannot be generated same root!")
+
         require(contained_in_merkle_tree(eth_addr_str, Int.to_str(amount_of_tokens), leaf_index, siblings), "From provided data, cannot be generated same root")
 
         let recovered_address = get_signer(msg_hash, sig)
@@ -39,12 +40,13 @@ payable contract TokenMigration =
 
     payable stateful function transfer(to: address, amount: int) =
         Chain.spend(to, amount)
+        amount
 
     stateful entrypoint contained_in_merkle_tree(eth_addr: string, tokens: string, i: int, siblings: list(string) ) =
         let data = String.concat(eth_addr, ":")
         let data = String.concat(data, tokens)
         let data = Bytes.to_str(String.sha3(data)) // hash -> str
-        
+
         //let data = Bytes.to_str(String.sha3(String.concat(eth_addr, ":", tokens))) // not working ?!
         
         put(state{map_temp_root[Call.caller] = data})
@@ -100,7 +102,7 @@ payable contract TokenMigration =
 
     function only_owner() =
         require(Call.caller == state.owner, "Owner require")
-
+        
     // helpers
     // entrypoint getHash(eth_addr: string, balance: string) =
     //     let temp = String.concat(eth_addr, ":")
