@@ -15,33 +15,37 @@ payable contract TokenMigration =
           map_index = {} }
 
     // eth_addr_str = "0XSDFDEHGEH" uppercase eth addr
-    stateful entrypoint migrate(amountOfTokens: string, aeAddress: string, leafIndex: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msgHash: hash) =
+    stateful entrypoint migrate(amount_of_tokens: int, ae_address: address, leaf_index: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msg_hash: hash) =
 
         // why this does not work? 
-        // require(containedInTree(String.concat("0X", Bytes.to_str(eth_address)), amountOfTokens, leafIndex, siblings), "From provided data, cannot be generated same root!")
-        require(containedInTree(eth_addr_str, amountOfTokens, leafIndex, siblings), "From provided data, cannot be generated same root!")
+        // require(contained_in_merkle_tree(String.concat("0X", Bytes.to_str(eth_address)), amount_of_tokens, leaf_index, siblings), "From provided data, cannot be generated same root!")
+        require(contained_in_merkle_tree(eth_addr_str, Int.to_str(amount_of_tokens), leaf_index, siblings), "From provided data, cannot be generated same root")
 
-        let recovered_address = getSigner(msgHash, sig)
+        let recovered_address = get_signer(msg_hash, sig)
         let are_equal = switch (recovered_address)
                             None => false
                             Some(recovered) => recovered == eth_address
 
-        require(are_equal, "Mismatch between passed eth address and recevored one!")
+        require(are_equal, "Mismatch between passed eth address and recevored one")
+
+        require(Address.is_payable(ae_address), "Passed AE address is not payable")
 
         put(state{migrations_count = state.migrations_count + 1})
-        //  transfer(aeAddress, amountOfTokens)
+        transfer(ae_address, amount_of_tokens)
         state.migrations_count
 
-    entrypoint getSigner(msgHash: hash, sig: bytes(65)) =
-        Crypto.ecrecover_secp256k1(msgHash, sig)
+    entrypoint get_signer(msg_hash: hash, sig: bytes(65)) =
+        Crypto.ecrecover_secp256k1(msg_hash, sig)
 
     payable stateful function transfer(to: address, amount: int) =
         Chain.spend(to, amount)
 
-    stateful entrypoint containedInTree(ethAddr: string, tokens: string, i: int, siblings: list(string) ) =
-        let data = String.concat(ethAddr, ":")
+    stateful entrypoint contained_in_merkle_tree(eth_addr: string, tokens: string, i: int, siblings: list(string) ) =
+        let data = String.concat(eth_addr, ":")
         let data = String.concat(data, tokens)
         let data = Bytes.to_str(String.sha3(data)) // hash -> str
+        
+        //let data = Bytes.to_str(String.sha3(String.concat(eth_addr, ":", tokens))) // not working ?!
         
         put(state{map_temp_root[Call.caller] = data})
         put(state{map_index[Call.caller] = i})
@@ -98,8 +102,8 @@ payable contract TokenMigration =
         require(Call.caller == state.owner, "Owner require")
 
     // helpers
-    // entrypoint getHash(ethAddr: string, balance: string) =
-    //     let temp = String.concat(ethAddr, ":")
+    // entrypoint getHash(eth_addr: string, balance: string) =
+    //     let temp = String.concat(eth_addr, ":")
     //     let temp = String.concat(temp, balance)
     //     Bytes.to_str(String.sha3(temp))
 
