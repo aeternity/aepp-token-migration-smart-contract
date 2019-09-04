@@ -5,6 +5,7 @@ payable contract TokenMigration =
           map_temp_root: map(address,string),
           migrations_count: int,
           owner: address,
+          map_transfered_accounts: map(string, bool),
           map_index: map(address, int) }
 
     entrypoint init(root_hash: string, count: int) : state = 
@@ -12,10 +13,13 @@ payable contract TokenMigration =
           map_temp_root = {},
           migrations_count = count,
           owner = Call.origin,
+          map_transfered_accounts = {},
           map_index = {} }
 
     // eth_addr_str = "0XSDFDEHGEH" uppercase eth addr
     payable stateful entrypoint migrate(amount_of_tokens: int, ae_address: address, leaf_index: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msg_hash: hash) =
+
+        require(!Map.lookup_default(eth_addr_str, state.map_transfered_accounts, false), "Account already transfer it's tokens")
 
         // why this does not work? 
         // require(contained_in_merkle_tree(String.concat("0X", Bytes.to_str(eth_address)), amount_of_tokens, leaf_index, siblings), "From provided data, cannot be generated same root!")
@@ -31,11 +35,12 @@ payable contract TokenMigration =
 
         require(Address.is_payable(ae_address), "Passed AE address is not payable")
 
-        put(state{migrations_count = state.migrations_count + 1})
         transfer(ae_address, amount_of_tokens)
+        put(state{migrations_count = state.migrations_count + 1})
+        put(state{map_transfered_accounts[eth_addr_str] = true})
         state.migrations_count
 
-    entrypoint get_signer(msg_hash: hash, sig: bytes(65)) =
+    function get_signer(msg_hash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msg_hash, sig)
 
     payable stateful function transfer(to: address, amount: int) =
@@ -67,11 +72,7 @@ payable contract TokenMigration =
             e :: l' => f(e) :: map_action(f, l')
 
     stateful function some_func(el: string) =
-
-        // want to pass 'index' like param, not like state variable, any suggestions?
-        // 'temp_root' too 
-        // because now I should refactor current code, every request should hold own 'index' and 'temp_root', something like this: map(caller, index), map(caller, temp_root)
-
+        // want to pass 'index' and 'temp_root' like params, not like state variables, any suggestions?
         if(state.map_index[Call.caller] mod 2 == 1)
             put(state{map_temp_root[Call.caller] = Bytes.to_str(String.sha3(String.concat(el, state.map_temp_root[Call.caller])))})
         else
@@ -97,8 +98,9 @@ payable contract TokenMigration =
         put(state{migrations_count = new_count})
 
     entrypoint balance() = Contract.balance
-
-    entrypoint get_migrations_count() = state.migrations_count
+    entrypoint root_hash() = state.root_hash
+    entrypoint migrations_count() = state.migrations_count
+    entrypoint is_migrated(eth_address: string) = Map.lookup_default(eth_address, state.map_transfered_accounts, false)
 
     function only_owner() =
         require(Call.caller == state.owner, "Owner require")

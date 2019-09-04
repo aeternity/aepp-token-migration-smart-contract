@@ -52,7 +52,7 @@ const deploy = async (network, privateKey, compiler, networkId) => {
         accounts: [AeSDK.MemoryAccount({
             keypair: moneyKeyPair
         })],
-        nativeMode: true,
+        nativeMode: false,
         networkId: net.networkId,
         compilerUrl: net.compilerUrl,
         forceCompatibility: true
@@ -64,14 +64,14 @@ const deploy = async (network, privateKey, compiler, networkId) => {
     
     // let spendRes = await client.spend(1, keyPair.publicKey)
     
-    // console.log("----- spend tx ------");
+    // console.log("----- spend tx ------"); 0897 30 09 19
     // console.log(spendRes);
     // console.log();
 
 
     const instance = await client.getContractInstance(contractSource);
 
-    const rootHash = "39535EE4CA0870495A63034FB62857115B1D2DB04D71A229C93B18E59933729A";
+    const rootHash = "29E1A00DC3C0C5B3F87AC1B14FC0368CB5EFAAF1AD8E0F9A258C24C1FF871377";
 
     // eth address that would sign message (token's owner)
     const secretKey = '0xcbae6bb63d6466f214d50e24c5c483834bd0cc52f78c69b0a467dc273c6c3a14'
@@ -85,7 +85,7 @@ const deploy = async (network, privateKey, compiler, networkId) => {
      const siblings = [
         "A216AC75AE5818D78F6CCD35C34331EDE119CA5BA40089FA6B0AF98A652F1988",
         "4412DABEB9B4565C487AE17C1EE837D3804BC36EE1942F2A5B6C9C987DAC2C40",
-        "2B09C8F74F3DB795689AAF1DB8C2A52E2EB5ACE15CA0FE43F3EFBE3AE276F570",
+        "109C4F87FCD527587266A4AEAD9D0AA0A81D8513E8F75E4D997DDDBB24D163A7",
         "BC2DBEBEA7A5C6B40ABF87D2C299218EFA12981C246A1D44F83D61C2B683A4CA",
         "DE1E73DC0453EBD5A68D45F85D5341DE9BE4AD8CC244D90022B1D1F7FE0657CC"
         // "3AB5113A03BD541A704BFB24C1CE7BEFAF752DF088EF3C4BDEF7C936534E5647",
@@ -109,6 +109,7 @@ const deploy = async (network, privateKey, compiler, networkId) => {
 
     // FUNDING CONTACT
     let deposit = 10 * 1000000000000000000; // N * 1 AE
+                    // 3797337559826489344
     let depositRes = await instance.methods.deposit({ amount: deposit })
     console.log("contract was funded with:", depositRes.decodedResult)
 
