@@ -244,11 +244,32 @@ describe('Token Migration', async function () {
                 tokenOwnerInfo.ethAddr, 
                 tokenOwnerInfo.ethAddr.substr(2), 
                 tokenOwnerInfo.signature, 
-                tokenOwnerInfo.hashedMsg)
+                tokenOwnerInfo.hashedMsg);
 
             let response = await instance.methods.migrations_count()
             assert.isOk(1 == response.decodedResult, "Migrations count is invalid")         
         })
+
+        // // should validate event data
+        // it('Should migrate tokens ', async () => {
+        //     let deposit = 10 * 1000000000000000000;
+        //     await instance.methods.deposit({ amount: deposit })
+
+        //     let response = await instance.methods.migrate(
+        //         tokenOwnerInfo.tokens,
+        //         tokenOwnerInfo.aeAddress, 
+        //         tokenOwnerInfo.leafIndex, 
+        //         tokenOwnerInfo.siblings,
+        //         tokenOwnerInfo.ethAddr, 
+        //         tokenOwnerInfo.ethAddr.substr(2), 
+        //         tokenOwnerInfo.signature, 
+        //         tokenOwnerInfo.hashedMsg);
+
+        //     console.log(response.result.log);
+
+        //     let response = await instance.methods.migrations_count()
+        //     assert.isOk(1 == response.decodedResult, "Migrations count is invalid")         
+        // })
 
         it('[Negative] Should not migrate tokens if contract have not been funded', async () => {
     
