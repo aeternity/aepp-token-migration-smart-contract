@@ -16,22 +16,24 @@ payable contract TokenMigration =
           map_transfered_accounts = {},
           map_index = {} }
 
-    // eth_addr_str = "0XSDFDEHGEH" uppercase eth addr
+    // 'eth_addr_str' should be passed as uppercase
     payable stateful entrypoint migrate(amount_of_tokens: int, ae_address: address, leaf_index: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msg_hash: hash) =
 
-        require(!Map.lookup_default(eth_addr_str, state.map_transfered_accounts, false), "Account already transfer it's tokens")
+        require(!Map.lookup_default(eth_addr_str, state.map_transfered_accounts, false), "This account has already transferred its tokens")
 
         // why this does not work? 
         // require(contained_in_merkle_tree(String.concat("0X", Bytes.to_str(eth_address)), amount_of_tokens, leaf_index, siblings), "From provided data, cannot be generated same root!")
 
+        // should successfully generate same merkle tree root hash
         require(contained_in_merkle_tree(eth_addr_str, Int.to_str(amount_of_tokens), leaf_index, siblings), "From provided data, cannot be generated same root")
 
+        // extract signer of signature, should be same address that holds tokens
         let recovered_address = get_signer(msg_hash, sig)
         let are_equal = switch (recovered_address)
                             None => false
                             Some(recovered) => recovered == eth_address
 
-        require(are_equal, "Mismatch between passed eth address and recevored one")
+        require(are_equal, "Mismatch between passed eth address and recovered one")
 
         require(Address.is_payable(ae_address), "Passed AE address is not payable")
 
@@ -47,17 +49,24 @@ payable contract TokenMigration =
         Chain.spend(to, amount)
         amount
 
-    stateful entrypoint contained_in_merkle_tree(eth_addr: string, tokens: string, i: int, siblings: list(string) ) =
+    stateful entrypoint contained_in_merkle_tree(eth_addr: string, tokens: string, leaf_index: int, siblings: list(string) ) =
+        // concat data => eth_Addr:tokens => concatenated data
         let data = String.concat(eth_addr, ":")
         let data = String.concat(data, tokens)
+
+        // concatenated data -> hash
         let data = Bytes.to_str(String.sha3(data)) // hash -> str
 
         //let data = Bytes.to_str(String.sha3(String.concat(eth_addr, ":", tokens))) // not working ?!
         
+        // set hashed concatenated data, merkle tree leaf root
         put(state{map_temp_root[Call.caller] = data})
-        put(state{map_index[Call.caller] = i})
-        map_action(some_func, siblings)
+        // set merkle tree leaf index
+        put(state{map_index[Call.caller] = leaf_index})
+        // iterate through merkle tree siblings(hashes of neighbor's leaf and rest of the nodes)
+        map_action(calculate_root, siblings)
 
+        // genarated merkle tree hash should be same as inited one
         let contained_in_tree = state.map_temp_root[Call.caller] == state.root_hash
 
         // delete current request data
@@ -66,12 +75,13 @@ payable contract TokenMigration =
 
         contained_in_tree
 
+    // iteration func
     stateful function map_action(f : 'a => 'b, l : list('a)) : list('b) =
         switch(l)
             [] => []
             e :: l' => f(e) :: map_action(f, l')
 
-    stateful function some_func(el: string) =
+    stateful function calculate_root(el: string) =
         // want to pass 'index' and 'temp_root' like params, not like state variables, any suggestions?
         if(state.map_index[Call.caller] mod 2 == 1)
             put(state{map_temp_root[Call.caller] = Bytes.to_str(String.sha3(String.concat(el, state.map_temp_root[Call.caller])))})
@@ -83,11 +93,6 @@ payable contract TokenMigration =
         ()
 
     payable stateful entrypoint deposit() = Call.value
-
-    payable stateful entrypoint withdraw(amount: int) =
-        only_owner()
-        require(amount =< balance(), "Insufficient funds")
-        Chain.spend(state.owner, amount)
 
     stateful entrypoint update_root(new_root: string) =
         only_owner()
@@ -104,18 +109,3 @@ payable contract TokenMigration =
 
     function only_owner() =
         require(Call.caller == state.owner, "Owner require")
-        
-    // helpers
-    // entrypoint getHash(eth_addr: string, balance: string) =
-    //     let temp = String.concat(eth_addr, ":")
-    //     let temp = String.concat(temp, balance)
-    //     Bytes.to_str(String.sha3(temp))
-
-    // entrypoint genRoot(left: string, right: string) =
-    //     let temp = String.concat(left, right)
-    //     Bytes.to_str(String.sha3(temp))
-
-    // entrypoint genHash(left: string, right: string) =
-    //     let temp = String.concat(left, right)
-    //     let a = String.sha3(temp)
-    //     String.sha3(String.concat(Bytes.to_str(a), Bytes.to_str(a)) )
