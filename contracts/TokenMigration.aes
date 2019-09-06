@@ -24,7 +24,7 @@ payable contract TokenMigration =
         // require(contained_in_merkle_tree(String.concat("0X", Bytes.to_str(eth_address)), amount_of_tokens, leaf_index, siblings), "From provided data, cannot be generated same root!")
 
         // should successfully generate same merkle tree root hash
-        let is_contained = contained_in_merkle_tree(eth_addr_str, Int.to_str(amount_of_tokens), leaf_index, siblings)
+        let is_contained = contained_in_merkle_tree(eth_addr_str, amount_of_tokens, leaf_index, siblings)
         require(is_contained, "From provided data, cannot be generated same root")
 
         // extract signer of signature, should be same address that holds tokens
@@ -52,10 +52,10 @@ payable contract TokenMigration =
         Chain.spend(to, amount)
         amount
 
-    entrypoint contained_in_merkle_tree(eth_addr: string, tokens: string, leaf_index: int, siblings: list(string) ) =
+    entrypoint contained_in_merkle_tree(eth_addr: string, tokens: int, leaf_index: int, siblings: list(string) ) =
         // concat data => eth_Addr:tokens => concatenated data
         let data = String.concat(eth_addr, ":")
-        let data = String.concat(data, tokens)
+        let data = String.concat(data, Int.to_str(tokens))
 
         // concatenated data -> hash
         let data = Bytes.to_str(String.sha3(data)) // hash -> str
