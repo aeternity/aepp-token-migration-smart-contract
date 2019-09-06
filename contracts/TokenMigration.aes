@@ -2,8 +2,8 @@ payable contract TokenMigration =
 
     datatype event = Migrated(bytes(20), address, int)
 
-    record state = 
-        { root_hash: string, 
+    record state =
+        { root_hash: string,
           map_temp_root: map(address,string),
           migrations_count: int,
           owner: address,
@@ -11,7 +11,7 @@ payable contract TokenMigration =
           map_current_caller: map(string, bool),
           map_index: map(address, int) }
 
-    entrypoint init(root_hash: string, count: int) : state = 
+    entrypoint init(root_hash: string, count: int) : state =
         { root_hash = root_hash,
           map_temp_root = {},
           migrations_count = count,
@@ -29,7 +29,7 @@ payable contract TokenMigration =
         require(!Map.lookup_default(eth_addr_str, state.map_current_caller, false), "There is a request from this ethereum address")
         put(state{map_current_caller[eth_addr_str] = true})
 
-        // why this does not work? 
+        // why this does not work?
         // require(contained_in_merkle_tree(String.concat("0X", Bytes.to_str(eth_address)), amount_of_tokens, leaf_index, siblings), "From provided data, cannot be generated same root!")
 
         // should successfully generate same merkle tree root hash
@@ -50,7 +50,7 @@ payable contract TokenMigration =
 
         require(are_equal, "Mismatch between passed eth address and recovered one")
 
-        
+
 
         transfer(ae_address, amount_of_tokens)
         put(state{migrations_count = state.migrations_count + 1})
@@ -77,7 +77,7 @@ payable contract TokenMigration =
         let data = Bytes.to_str(String.sha3(data)) // hash -> str
 
         //let data = Bytes.to_str(String.sha3(String.concat(eth_addr, ":", tokens))) // not working ?!
-        
+
         // set hashed concatenated data, merkle tree leaf root
         put(state{map_temp_root[Call.caller] = data})
         // set merkle tree leaf index
