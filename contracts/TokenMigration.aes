@@ -2,13 +2,15 @@ payable contract TokenMigration =
 
     datatype event = Migrated(bytes(20), address, int)
 
+    type set('a) = map('a, unit)
+
     record state =
         { root_hash: string,
           map_temp_root: map(address,string),
           migrations_count: int,
           owner: address,
-          map_transfered_accounts: map(string, bool),
-          map_current_caller: map(string, bool),
+          map_transfered_accounts: set(string),
+          map_current_caller: set(string),
           map_index: map(address, int) }
 
     entrypoint init(root_hash: string, count: int) : state =
@@ -23,11 +25,11 @@ payable contract TokenMigration =
     // 'eth_addr_str' should be passed as uppercase
     payable stateful entrypoint migrate(amount_of_tokens: int, ae_address: address, leaf_index: int, siblings: list(string), eth_addr_str: string, eth_address: bytes(20), sig: bytes(65), msg_hash: hash) =
 
-        require(!Map.lookup_default(eth_addr_str, state.map_transfered_accounts, false), "This account has already transferred its tokens")
+        require(!Map.member(eth_addr_str, state.map_transfered_accounts), "This account has already transferred its tokens")
         require(Address.is_payable(ae_address), "Passed AE address is not payable")
         // request from this eth address is in progress
-        require(!Map.lookup_default(eth_addr_str, state.map_current_caller, false), "There is a request from this ethereum address")
-        put(state{map_current_caller[eth_addr_str] = true})
+        require(!Map.member(eth_addr_str, state.map_current_caller), "There is a request from this ethereum address")
+        put(state{map_current_caller[eth_addr_str] = ()})
 
         // why this does not work?
         // require(contained_in_merkle_tree(String.concat("0X", Bytes.to_str(eth_address)), amount_of_tokens, leaf_index, siblings), "From provided data, cannot be generated same root!")
@@ -54,7 +56,7 @@ payable contract TokenMigration =
 
         transfer(ae_address, amount_of_tokens)
         put(state{migrations_count = state.migrations_count + 1})
-        put(state{map_transfered_accounts[eth_addr_str] = true})
+        put(state{map_transfered_accounts[eth_addr_str] = ()})
 
         Chain.event(Migrated(eth_address, ae_address, amount_of_tokens))
         put(state{map_current_caller = Map.delete(eth_addr_str, state.map_current_caller)})
@@ -124,7 +126,7 @@ payable contract TokenMigration =
     entrypoint balance() = Contract.balance
     entrypoint root_hash() = state.root_hash
     entrypoint migrations_count() = state.migrations_count
-    entrypoint is_migrated(eth_address: string) = Map.lookup_default(eth_address, state.map_transfered_accounts, false)
+    entrypoint is_migrated(eth_address: string) = Map.member(eth_address, state.map_transfered_accounts)
 
     function only_owner() =
         require(Call.caller == state.owner, "Owner require")
