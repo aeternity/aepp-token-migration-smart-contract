@@ -7,13 +7,11 @@ payable contract TokenMigration =
     record state =
         { root_hash: string,
           migrations_count: int,
-          owner: address,
           map_transfered_accounts: set(string) }
 
     entrypoint init(root_hash: string, count: int) : state =
         { root_hash = root_hash,
           migrations_count = count,
-          owner = Call.origin,
           map_transfered_accounts = {} }
 
     // 'eth_addr_str' should be passed as uppercase
@@ -92,4 +90,4 @@ payable contract TokenMigration =
     entrypoint is_migrated(eth_address: string) = Map.member(eth_address, state.map_transfered_accounts)
 
     function only_owner() =
-        require(Call.caller == state.owner, "Owner require")
+        require(Call.caller == Contract.creator, "Owner require")
