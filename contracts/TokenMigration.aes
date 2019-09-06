@@ -20,9 +20,6 @@ payable contract TokenMigration =
         require(!Map.member(eth_addr_str, state.map_transfered_accounts), "This account has already transferred its tokens")
         require(Address.is_payable(ae_address), "Passed AE address is not payable")
 
-        // why this does not work?
-        // require(contained_in_merkle_tree(String.concat("0X", Bytes.to_str(eth_address)), amount_of_tokens, leaf_index, siblings), "From provided data, cannot be generated same root!")
-
         // should successfully generate same merkle tree root hash
         let is_contained = contained_in_merkle_tree(eth_addr_str, amount_of_tokens, leaf_index, siblings)
         require(is_contained, "From provided data, cannot be generated same root")
@@ -35,9 +32,7 @@ payable contract TokenMigration =
 
         require(are_equal, "Mismatch between passed eth address and recovered one")
 
-
-
-        transfer(ae_address, amount_of_tokens)
+        Chain.spend(ae_address, amount_of_tokens)
         put(state{migrations_count = state.migrations_count + 1})
         put(state{map_transfered_accounts[eth_addr_str] = ()})
 
@@ -47,10 +42,6 @@ payable contract TokenMigration =
 
     function get_signer(msg_hash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msg_hash, sig)
-
-    payable stateful function transfer(to: address, amount: int) =
-        Chain.spend(to, amount)
-        amount
 
     entrypoint contained_in_merkle_tree(eth_addr: string, tokens: int, leaf_index: int, siblings: list(string) ) =
         // concat data => eth_Addr:tokens => concatenated data
