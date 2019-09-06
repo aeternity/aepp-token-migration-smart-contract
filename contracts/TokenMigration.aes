@@ -65,12 +65,15 @@ payable contract TokenMigration =
                 let data = if (index mod 2 == 1) String.concat(el, root) else String.concat(root, el)
                 calculate_root(els, index / 2, Bytes.to_str(String.sha3(data)))
 
-    payable stateful entrypoint deposit() = Call.value
+    // Test only?
+    payable entrypoint deposit() = Call.value
 
+    // Test only?
     stateful entrypoint update_root(new_root: string) =
         only_owner()
         put(state{root_hash = new_root})
 
+    // Test only?
     stateful entrypoint update_migrations_count(new_count: int) =
         only_owner()
         put(state{migrations_count = new_count})
