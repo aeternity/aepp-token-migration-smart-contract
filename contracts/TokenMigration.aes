@@ -66,17 +66,9 @@ payable contract TokenMigration =
                 calculate_root(els, index / 2, Bytes.to_str(String.sha3(data)))
 
     // Test only?
-    payable entrypoint deposit() = Call.value
-
-    // Test only?
     stateful entrypoint update_root(new_root: string) =
         only_owner()
         put(state{root_hash = new_root})
-
-    // Test only?
-    stateful entrypoint update_migrations_count(new_count: int) =
-        only_owner()
-        put(state{migrations_count = new_count})
 
     entrypoint balance() = Contract.balance
     entrypoint root_hash() = state.root_hash
