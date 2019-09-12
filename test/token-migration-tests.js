@@ -272,8 +272,8 @@ describe('Token Migration', async function () {
             });
             assert.isOk(deposit == contractBalanceResult.decodedResult, "Get balance returns invalid amount.");
         })
-
-        it('Should successfully change root hash', async () => {
+        //Skiping for now, if we all agree to remove the func I will also remove the tests
+        xit('Should successfully change root hash', async () => {
 
             const tempRootHash = 'some-root';
 
@@ -290,34 +290,8 @@ describe('Token Migration', async function () {
 
             assert.isOk(tempRootHash === response.decodedResult, "Root hash does not match")
         })
-
-        xit('Should successfully change migrations count', async () => {
-
-            const tempMigrationsCount = 53;
-
-            await instance.methods.update_migrations_count(tempMigrationsCount, {
-                backend: 'fate',
-                vmVersion: 5,
-                abiVersion: 3
-            })
-            let response = await instance.methods.migrations_count({
-                backend: 'fate',
-                vmVersion: 5,
-                abiVersion: 3
-            });
-
-            assert.isOk(tempMigrationsCount === response.decodedResult, "Root hash does not match")
-        })
-
-        xit('[NEGATIVE] Not owner should not update migrations count', async () => {
-            assert.isRejected(notOwnerInstance.methods.update_migrations_count(566, {
-                backend: 'fate',
-                vmVersion: 5,
-                abiVersion: 3
-            }), "Owner require")
-        })
-
-        it('[NEGATIVE] Not owner should not update root hash', async () => {
+        //Skiping for now, if we all agree to remove the func I will also remove the tests
+        xit('[NEGATIVE] Not owner should not update root hash', async () => {
             assert.isRejected(notOwnerInstance.methods.update_root("566_root", {
                 backend: 'fate',
                 vmVersion: 5,
@@ -352,7 +326,6 @@ describe('Token Migration', async function () {
                     vmVersion: 5,
                     abiVersion: 3
                 });
-
 
             let response = await instance.methods.migrations_count({
                 backend: 'fate',
