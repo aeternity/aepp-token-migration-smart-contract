@@ -52,7 +52,7 @@ payable contract TokenMigration =
         state.migrations_count
 
 
-    entrypoint get_signer(msg_hash: hash, sig: bytes(65)) =
+    function get_signer(msg_hash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msg_hash, sig)
 
 
