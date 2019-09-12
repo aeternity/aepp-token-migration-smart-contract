@@ -59,6 +59,11 @@ const tokenOwnerInfo = {
     signature: "1b71fb287d407addf9b076ee683b47976fd332c99a0c0f47fc820fdf45ce548cbb2992761cba1428a524ed324b65da7e7f41144deedfd22452d7c7f4359be7b3b2"
 };
 
+const anotherKeyPair = {
+    publicKey: "ak_tWZrf8ehmY7CyB1JAoBmWJEeThwWnDpU4NadUdzxVSbzDgKjP",
+    secretKey: "7fa7934d142c8c1c944e1585ec700f671cbc71fb035dc9e54ee4fb880edfe8d974f58feba752ae0426ecbee3a31414d8e6b3335d64ec416f3e574e106c7e5412"
+}
+
 const anotherTokenOwnerInfo = {
     rootHash: "C157111DB92FAFB1EE7C78B93424BC6F6A35DFE14CECA121F8528D4E8360CB2C",
     ethAddr: "0x3963a38ee57d6F644895B7Ec95Bd88b578A966Cc".toUpperCase(),
@@ -72,8 +77,8 @@ const anotherTokenOwnerInfo = {
         "A8D5C7ADBD530EC96F5F2286ADE61A88A5394F32EB12A3C5E348158295CA2FCB",
         "539A95A2444C822F882017FFD3BCC4FEA7D7A63D2D2EC308765D3AC703E86784"
     ],
-    hashedMsg: "8452c9b9140222b08593a26daa782707297be9f7b3e8281d7b4974769f19afd0",
-    signature: "1c49693957d84bade7c3e402655cf92ed9e41f8592685d31c0f2e54c3f166fab1b31fd4e99c55179415190a5af780a166856f880d9caaeed3f7d4bdba7ae3bcd7d"
+    hashedMsg: "6f9d9941c009e57c5f03ed21311128963508c043139d08cd0d672de5b992a05a",
+    signature: "1c7eda90e754baa9f6a9a0abd19a919fe166f91c0a63e29ad558aa3720cf737d781689107fc4e9fa14f53268bf75a03356758284a6aa46a0049b37b33945d2f018"
 };
 
 describe('Token Migration', async function () {
@@ -321,7 +326,7 @@ describe('Token Migration', async function () {
         })
     })
 
-    describe.only('Migration', function () {
+    describe('Migration', function () {
 
         beforeEach(async function () {
             await instance.deploy([tokenOwnerInfo.rootHash, 0], {
@@ -347,14 +352,6 @@ describe('Token Migration', async function () {
                     vmVersion: 5,
                     abiVersion: 3
                 });
-
-
-            // let signer = await instance.methods.testStrings(tokenOwnerInfo.hashedMsg, "ak_24T5a3PKqPufM5i7Y3E83g5jBELcAWAdBWdSr2VSqHZE7KpbX8", tokenOwnerInfo.ethAddr, "ak_24T5a3PKqPufM5i7Y3E83g5jBELcAWAdBWdSr2VSqHZE7KpbX8", tokenOwnerInfo.signature, tokenOwnerInfo.tokens, tokenOwnerInfo.leafIndex, tokenOwnerInfo.siblings, {
-            //     backend: 'fate',
-            //     vmVersion: 5,
-            //     abiVersion: 3
-            // })
-            // console.log(signer)
 
 
             let response = await instance.methods.migrations_count({
@@ -394,7 +391,7 @@ describe('Token Migration', async function () {
             });
 
             try {
-                await instance.methods.migrate(
+                await notFundedInstance.methods.migrate(
                     tokenOwnerInfo.tokens,
                     tokenOwnerInfo.aeAddress,
                     tokenOwnerInfo.leafIndex,
@@ -408,14 +405,14 @@ describe('Token Migration', async function () {
 
                 assert.isOk(false, "Should not migrate tokens when contract is not funded")
             } catch (error) {
-                assert.isOk(error.message.includes('out_of_gas'), "Should not migrate tokens when contract is not funded");
+                assert.isOk(error.message.includes('Error in spend: insufficient_funds'), "Should not migrate tokens when contract is not funded");
             }
         })
 
 
-        it('[NEGATIVE] Should not reproduce same merkle tree root hash with invalid ehtereum address', async () => {
+        it('[NEGATIVE] Should not reproduce same merkle tree root hash with invalid signature, eth address is not in root', async () => {
 
-            const invalidEthAddr = '0x20b9BD8fBf8530E141e937D42F514305704bC4E2'.toUpperCase();
+            const invalidSignature = '2c43985fce5182c64f32e37cc452d0b869f1a3c1d6fae5624ed50d7cb3e011d062f92077b166c7551925bb39ce698b5c570538739a30ae6b3e8153092acca0c71c'
 
             try {
                 await instance.methods.migrate(
@@ -423,8 +420,7 @@ describe('Token Migration', async function () {
                     tokenOwnerInfo.aeAddress,
                     tokenOwnerInfo.leafIndex,
                     tokenOwnerInfo.siblings,
-                    tokenOwnerInfo.signature,
-                    tokenOwnerInfo.hashedMsg, {
+                    invalidSignature, {
                         backend: 'fate',
                         vmVersion: 5,
                         abiVersion: 3
@@ -565,7 +561,7 @@ describe('Token Migration', async function () {
 
             await instance.methods.migrate(
                 anotherTokenOwnerInfo.tokens,
-                anotherTokenOwnerInfo.aeAddress,
+                anotherKeyPair.publicKey,
                 anotherTokenOwnerInfo.leafIndex,
                 anotherTokenOwnerInfo.siblings,
                 anotherTokenOwnerInfo.signature, {
@@ -597,16 +593,15 @@ describe('Token Migration', async function () {
         })
 
         // // negative pass invalid hashed msg
-        it("[NEGATIVE] Should not migrate with invalid hashed message", async () => {
+        it("[NEGATIVE] Should not migrate with invalid aeternity address", async () => {
 
             try {
                 await instance.methods.migrate(
                     tokenOwnerInfo.tokens,
-                    tokenOwnerInfo.aeAddress,
+                    "ak_ZLqPe9J2qenismR9FoJ93zJs8To91LQH9iVb2X4HRkRKMpxXt",
                     tokenOwnerInfo.leafIndex,
                     tokenOwnerInfo.siblings,
-                    tokenOwnerInfo.signature,
-                    "AA52c9b9140222b08593a26daa782707297be9f7b3e8281d7b4974769f19afd0", {
+                    tokenOwnerInfo.signature, {
                         backend: 'fate',
                         vmVersion: 5,
                         abiVersion: 3
@@ -614,7 +609,7 @@ describe('Token Migration', async function () {
 
                 assert.isOk(false, "Migrated has been passed with invalid hashed message")
             } catch (error) {
-                assert.isOk(error.message.includes('Mismatch between passed eth address and recovered one'), "Error message is not that should be. Should not be able to recover ethereum address");
+                assert.isOk(error.message.includes('From provided data, cannot be generated same root'), "Error message is not that should be. Should not be able to recover ethereum address");
             }
         })
 
@@ -635,7 +630,7 @@ describe('Token Migration', async function () {
 
                 assert.isOk(false, "Migrated has been passed with invalid signature")
             } catch (error) {
-                assert.isOk(error.message.includes('Mismatch between passed eth address and recovered one'), "Error message is not that should be. Should not be able to recover ethereum address");
+                assert.isOk(error.message.includes('From provided data, cannot be generated same root'), "Error message is not that should be. Should not be able to recover ethereum address");
             }
         })
     })
