@@ -38,9 +38,7 @@ payable contract TokenMigration =
                                             Some(recovered) => String.concat("0X", Bytes.to_str(recovered))
 
         require(!is_migrated(recovered_eth_address_string), "This account has already transferred its tokens")
-        
-        let is_contained = contained_in_merkle_tree(recovered_eth_address_string, token_amount, leaf_index, siblings)
-        require(is_contained, "From provided data, cannot be generated same root")
+        require(contained_in_merkle_tree(recovered_eth_address_string, token_amount, leaf_index, siblings), "From provided data, cannot be generated same root")
 
         Chain.spend(ae_address, token_amount)
         put(state{migrations_count = state.migrations_count + 1})
@@ -79,6 +77,3 @@ payable contract TokenMigration =
     entrypoint root_hash() = state.root_hash
     entrypoint migrations_count() = state.migrations_count
     entrypoint is_migrated(eth_address: string) = Map.member(eth_address, state.map_transfered_accounts)
-
-    function only_owner() =
-        require(Call.caller == Contract.creator, "Owner require")
