@@ -171,7 +171,7 @@ describe('Token Migration', async function () {
             });
         })
 
-        it.only('Root hash should be same as deployed one', async () => {
+        it('Root hash should be same as deployed one', async () => {
 
             let response = await instance.call("root_hash", [], {
                 backend: 'fate',
@@ -320,7 +320,7 @@ describe('Token Migration', async function () {
             tokenOwnerInfo.aeAddress = 'ak_2nz23cBQyQXKrCjUJ7UgiDoN9Fq8Co9m5zM99iYg9XMQtToWZi';
         })
 
-        it.only('Should migrate tokens ', async () => {
+        it('Should migrate tokens ', async () => {
 
             let migrate = await instance.call("migrate", [
                 tokenOwnerInfo.tokens,
