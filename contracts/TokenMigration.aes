@@ -37,10 +37,9 @@ payable contract TokenMigration =
         // By providing the hashed_ae_address to the ecrevocer we are sure that the eth_address is correct
         let recovered_eth_address = get_signer(hashed_msg, sig)
         let recovered_eth_address_string = switch (recovered_eth_address)
-                                            None => ""
+                                            None => abort("Failed to recover address, bad signature")
                                             Some(recovered) => String.concat("0X", Bytes.to_str(recovered))
 
-        require(recovered_eth_address_string != "", "Cannot recover Etherium Address")
         require(!is_migrated(recovered_eth_address_string), "This account has already transferred its tokens")
         require(contained_in_merkle_tree(recovered_eth_address_string, token_amount, leaf_index, siblings), "From provided data, cannot be generated same root")
 
