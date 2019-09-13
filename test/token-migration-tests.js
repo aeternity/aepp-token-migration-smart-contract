@@ -56,7 +56,7 @@ const tokenOwnerInfo = {
         "539A95A2444C822F882017FFD3BCC4FEA7D7A63D2D2EC308765D3AC703E86784"
     ],
     hashedMsg: "259c99268998ec1ad242b9aa2f35ae82e1f02b0788128e8c3b2eb021a25730aa",
-    signature: "1b71fb287d407addf9b076ee683b47976fd332c99a0c0f47fc820fdf45ce548cbb2992761cba1428a524ed324b65da7e7f41144deedfd22452d7c7f4359be7b3b2"
+    signature: "1bcc6728ed7eedb93d2fae73699a4bc58e8518fe1f6c73e7fe2717c6c0daaeebb816ab86bdf17212a4b171e5c9464d89f3c4863cfe31c92c30717729b2ffabadc9"
 };
 
 const anotherKeyPair = {
@@ -171,14 +171,20 @@ describe('Token Migration', async function () {
             });
         })
 
-        it('Root hash should be same as deployed one', async () => {
+        it.only('Root hash should be same as deployed one', async () => {
 
-            let response = await instance.methods.root_hash({
+            let response = await instance.call("root_hash", [], {
                 backend: 'fate',
                 vmVersion: 5,
                 abiVersion: 3
             });
 
+            // let response = await instance.methods.root_hash({
+            //     backend: 'fate',
+            //     vmVersion: 5,
+            //     abiVersion: 3
+            // });
+            console.log(response)
             assert.isOk(tokenOwnerInfo.rootHash === response.decodedResult, "Root hash does not match")
         })
 
@@ -311,23 +317,41 @@ describe('Token Migration', async function () {
             });
 
             let notOwnerKeyPair = await crypto.generateKeyPair();
-            tokenOwnerInfo.aeAddress = "ak_24T5a3PKqPufM5i7Y3E83g5jBELcAWAdBWdSr2VSqHZE7KpbX8";
+            tokenOwnerInfo.aeAddress = 'ak_2nz23cBQyQXKrCjUJ7UgiDoN9Fq8Co9m5zM99iYg9XMQtToWZi';
         })
 
-        it('Should migrate tokens ', async () => {
+        it.only('Should migrate tokens ', async () => {
 
-            await instance.methods.migrate(
+            let migrate = await instance.call("migrate", [
                 tokenOwnerInfo.tokens,
                 tokenOwnerInfo.aeAddress,
                 tokenOwnerInfo.leafIndex,
                 tokenOwnerInfo.siblings,
-                tokenOwnerInfo.signature, {
-                    backend: 'fate',
-                    vmVersion: 5,
-                    abiVersion: 3
-                });
+                tokenOwnerInfo.signature
+            ], {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
 
-            let response = await instance.methods.migrations_count({
+            // let migrate = await instance.methods.migrate(
+            //     tokenOwnerInfo.tokens,
+            //     tokenOwnerInfo.aeAddress,
+            //     tokenOwnerInfo.leafIndex,
+            //     tokenOwnerInfo.siblings,
+            //     tokenOwnerInfo.signature, {
+            //         backend: 'fate',
+            //         vmVersion: 5,
+            //         abiVersion: 3
+            //     });
+
+            // let response = await instance.methods.migrations_count({
+            //     backend: 'fate',
+            //     vmVersion: 5,
+            //     abiVersion: 3
+            // })
+
+            let response = await instance.call("migrations_count", [], {
                 backend: 'fate',
                 vmVersion: 5,
                 abiVersion: 3

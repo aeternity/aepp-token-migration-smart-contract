@@ -29,14 +29,18 @@ payable contract TokenMigration =
     */
     stateful entrypoint migrate(token_amount: int, ae_address: address, leaf_index: int, siblings: list(string), sig: bytes(65)) =
         require(Address.is_payable(ae_address), "Passed AE address is not payable")
-        let hashed_ae_address = String.sha3(Address.to_str(ae_address))
+
+        let ae_address_str = Address.to_str(ae_address)
+        let unhashed_msg = String.concat("\x19Ethereum Signed Message:\n", String.concat(Int.to_str(String.length(ae_address_str)), ae_address_str))
+        let hashed_msg = String.sha3(unhashed_msg)
 
         // By providing the hashed_ae_address to the ecrevocer we are sure that the eth_address is correct
-        let recovered_eth_address = get_signer(hashed_ae_address, sig)
+        let recovered_eth_address = get_signer(hashed_msg, sig)
         let recovered_eth_address_string = switch (recovered_eth_address)
                                             None => ""
                                             Some(recovered) => String.concat("0X", Bytes.to_str(recovered))
 
+        require(recovered_eth_address_string != "", "Cannot recover Etherium Address")
         require(!is_migrated(recovered_eth_address_string), "This account has already transferred its tokens")
         require(contained_in_merkle_tree(recovered_eth_address_string, token_amount, leaf_index, siblings), "From provided data, cannot be generated same root")
 
@@ -51,8 +55,6 @@ payable contract TokenMigration =
 
     function get_signer(msg_hash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msg_hash, sig)
-
-
 
     entrypoint contained_in_merkle_tree(eth_addr: string, token_amount: int, leaf_index: int, siblings: list(string) ) =
         // concat leaf_data => eth_Addr:tokens => concatenated data

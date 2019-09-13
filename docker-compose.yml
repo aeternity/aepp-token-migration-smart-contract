@@ -2,13 +2,13 @@
 version: '3'
 services:
   node1:
-    image: aeternity/aeternity:v5.0.0-rc.1
+    image: aeternity/aeternity:aeuniverse-demo
     # image: aeternity/aeternity:v4.2.0
     hostname: node1
     environment:
       EPOCH_CONFIG: /home/epoch/epoch.yaml
     command: >
-      -aehttp enable_debug_endpoints true
+      bin/aeternity console -noinput -aehttp enable_debug_endpoints true
     volumes:
       - ./docker/aeternity_node1_mean15.yaml:/home/epoch/epoch.yaml
       - ./docker/keys/node1:/home/epoch/node/keys
@@ -16,13 +16,13 @@ services:
       - ./docker/logs:/home/aeternity/node/log
 
   node2:
-    image: aeternity/aeternity:v5.0.0-rc.1
+    image: aeternity/aeternity:aeuniverse-demo
     # image: aeternity/aeternity:v4.2.0
     hostname: node2
     environment:
       EPOCH_CONFIG: /home/epoch/epoch.yaml
     command: >
-      -aehttp enable_debug_endpoints true
+      bin/aeternity console -noinput -aehttp enable_debug_endpoints true
     volumes:
       - ./docker/aeternity_node2_mean15.yaml:/home/epoch/epoch.yaml
       - ./docker/keys/node2:/home/epoch/node/keys
@@ -30,13 +30,13 @@ services:
       - ./docker/logs:/home/aeternity/node/log
 
   node3:
-    image: aeternity/aeternity:v5.0.0-rc.1
+    image: aeternity/aeternity:aeuniverse-demo
     # image: aeternity/aeternity:v4.2.0
     hostname: node3
     environment:
       EPOCH_CONFIG: /home/epoch/epoch.yaml
     command: >
-      -aehttp enable_debug_endpoints true
+      bin/aeternity console -noinput -aehttp enable_debug_endpoints true
     volumes:
       - ./docker/aeternity_node3_mean15.yaml:/home/epoch/epoch.yaml
       - ./docker/keys/node3:/home/epoch/node/keys
