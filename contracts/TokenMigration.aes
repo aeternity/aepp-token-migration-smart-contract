@@ -1,4 +1,4 @@
-payable contract TokenMigration =
+contract TokenMigration =
 
     datatype event = Migrated(string, address, int)
 
