@@ -55,9 +55,14 @@ const tokenOwnerInfo = {
         "A8D5C7ADBD530EC96F5F2286ADE61A88A5394F32EB12A3C5E348158295CA2FCB",
         "539A95A2444C822F882017FFD3BCC4FEA7D7A63D2D2EC308765D3AC703E86784"
     ],
-    hashedMsg: "8452c9b9140222b08593a26daa782707297be9f7b3e8281d7b4974769f19afd0",
-    signature: "1b49d246e634360b98e8fd3d44470efb86b1631dccedec50e19ebee925a31e506816a369f67ee8ab292af8b9fe447a69768d7ac76f96e617db29047b5760a41af5"
+    hashedMsg: "259c99268998ec1ad242b9aa2f35ae82e1f02b0788128e8c3b2eb021a25730aa",
+    signature: "1bcc6728ed7eedb93d2fae73699a4bc58e8518fe1f6c73e7fe2717c6c0daaeebb816ab86bdf17212a4b171e5c9464d89f3c4863cfe31c92c30717729b2ffabadc9"
 };
+
+const anotherKeyPair = {
+    publicKey: "ak_tWZrf8ehmY7CyB1JAoBmWJEeThwWnDpU4NadUdzxVSbzDgKjP",
+    secretKey: "7fa7934d142c8c1c944e1585ec700f671cbc71fb035dc9e54ee4fb880edfe8d974f58feba752ae0426ecbee3a31414d8e6b3335d64ec416f3e574e106c7e5412"
+}
 
 const anotherTokenOwnerInfo = {
     rootHash: "C157111DB92FAFB1EE7C78B93424BC6F6A35DFE14CECA121F8528D4E8360CB2C",
@@ -72,8 +77,8 @@ const anotherTokenOwnerInfo = {
         "A8D5C7ADBD530EC96F5F2286ADE61A88A5394F32EB12A3C5E348158295CA2FCB",
         "539A95A2444C822F882017FFD3BCC4FEA7D7A63D2D2EC308765D3AC703E86784"
     ],
-    hashedMsg: "8452c9b9140222b08593a26daa782707297be9f7b3e8281d7b4974769f19afd0",
-    signature: "1c49693957d84bade7c3e402655cf92ed9e41f8592685d31c0f2e54c3f166fab1b31fd4e99c55179415190a5af780a166856f880d9caaeed3f7d4bdba7ae3bcd7d"
+    hashedMsg: "6f9d9941c009e57c5f03ed21311128963508c043139d08cd0d672de5b992a05a",
+    signature: "1c7eda90e754baa9f6a9a0abd19a919fe166f91c0a63e29ad558aa3720cf737d781689107fc4e9fa14f53268bf75a03356758284a6aa46a0049b37b33945d2f018"
 };
 
 describe('Token Migration', async function () {
@@ -88,12 +93,22 @@ describe('Token Migration', async function () {
         let randomKeyPair = await crypto.generateKeyPair();
         tokenOwnerInfo.aeAddress = randomKeyPair.publicKey;
 
+        const UniversalFate = Universal.compose({
+            props: {
+                compilerOptions: {
+                    backend: 'fate'
+                },
+                vmVersion: 5,
+                abiVersion: 3
+            }
+        })
+
         node = await Node({
             url: network.url,
             internalUrl: network.internalUrl,
             forceCompatibility: true
         })
-        client = await Universal({
+        client = await UniversalFate({
             nodes: [{
                 name: 'ANY_NAME',
                 instance: node
@@ -104,24 +119,37 @@ describe('Token Migration', async function () {
             nativeMode: false,
             networkId: network.networkId,
             compilerUrl: network.compilerUrl,
-            forceCompatibility: true
+            forceCompatibility: true,
+
         })
 
-        instance = await client.getContractInstance(contractSource);
+        instance = await client.getContractInstance(contractSource, {
+            backend: 'fate',
+            vmVersion: 5,
+            abiVersion: 3
+        });
         notFundedInstance = await client.getContractInstance(contractSource);
     })
 
     describe('Deploy', () => {
 
         it('Is deployment fulfilled', async () => {
+
             await assert.isFulfilled(instance.deploy(["0xSomeRoot", 0], {
-                amount: 10 * 1000000000000000000
-            }), 'Could not deploy the Token Migration Smart Contract');
+                amount: 10 * 1000000000000000000,
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            }))
+
         })
 
         it('Check deploy info result', async () => {
             const deployInfo = await instance.deploy(["0xSomeRoot", 0], {
-                amount: 10 * 1000000000000000000
+                amount: 10 * 1000000000000000000,
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
             });
 
             let propsShouldHave = deployInfo.owner && deployInfo.transaction && deployInfo.address && deployInfo.createdAt && deployInfo.result && deployInfo.rawTx;
@@ -136,27 +164,52 @@ describe('Token Migration', async function () {
 
         before(async function () {
             await instance.deploy([tokenOwnerInfo.rootHash, migrationsCount], {
-                amount: 10 * 1000000000000000000
+                amount: 10 * 1000000000000000000,
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
             });
         })
 
         it('Root hash should be same as deployed one', async () => {
 
-            let response = await instance.methods.root_hash();
+            let response = await instance.call("root_hash", [], {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
 
+            // let response = await instance.methods.root_hash({
+            //     backend: 'fate',
+            //     vmVersion: 5,
+            //     abiVersion: 3
+            // });
+            console.log(response)
             assert.isOk(tokenOwnerInfo.rootHash === response.decodedResult, "Root hash does not match")
         })
 
         it('Contract balance should be 0', async () => {
 
-            await notFundedInstance.deploy([tokenOwnerInfo.rootHash, 0]);
-            let response = await notFundedInstance.methods.balance();
+            await notFundedInstance.deploy([tokenOwnerInfo.rootHash, 0], {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
+            let response = await notFundedInstance.methods.balance({
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
             assert.isOk(0 == response.decodedResult, "Balance is not 0");
         })
 
         it('Migrations count should be 0', async () => {
 
-            let response = await instance.methods.migrations_count();
+            let response = await instance.methods.migrations_count({
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
 
             assert.isOk(migrationsCount === response.decodedResult, "Root hash does not match")
         })
@@ -167,7 +220,11 @@ describe('Token Migration', async function () {
                 let randomWallet = ethers.Wallet.createRandom();
                 let ethAddress = randomWallet.signingKey.address;
 
-                let response = await instance.methods.is_migrated(ethAddress);
+                let response = await instance.methods.is_migrated(ethAddress, {
+                    backend: 'fate',
+                    vmVersion: 5,
+                    abiVersion: 3
+                });
 
                 assert.isOk(!response.decodedResult, "There is migrated ethereum address")
             }
@@ -181,7 +238,10 @@ describe('Token Migration', async function () {
             this.timeout(50000);
 
             let response = await instance.deploy([tokenOwnerInfo.rootHash, 0], {
-                amount: 10 * 1000000000000000000
+                amount: 10 * 1000000000000000000,
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
             });
             let contractAddress = response.address;
 
@@ -211,36 +271,38 @@ describe('Token Migration', async function () {
 
         it('Should successfully fund "deposit" contract. [PAYABLE] functionality, if not should throw exception', async () => {
             let deposit = 10000000000000000000
-            let contractBalanceResult = await instance.methods.balance();
+            let contractBalanceResult = await instance.methods.balance({
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
             assert.isOk(deposit == contractBalanceResult.decodedResult, "Get balance returns invalid amount.");
         })
-
-        it('Should successfully change root hash', async () => {
+        //Skiping for now, if we all agree to remove the func I will also remove the tests
+        xit('Should successfully change root hash', async () => {
 
             const tempRootHash = 'some-root';
 
-            await instance.methods.update_root(tempRootHash)
-            let response = await instance.methods.root_hash();
+            await instance.methods.update_root(tempRootHash, {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            })
+            let response = await instance.methods.root_hash({
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
 
             assert.isOk(tempRootHash === response.decodedResult, "Root hash does not match")
         })
-
-        xit('Should successfully change migrations count', async () => {
-
-            const tempMigrationsCount = 53;
-
-            await instance.methods.update_migrations_count(tempMigrationsCount)
-            let response = await instance.methods.migrations_count();
-
-            assert.isOk(tempMigrationsCount === response.decodedResult, "Root hash does not match")
-        })
-
-        xit('[NEGATIVE] Not owner should not update migrations count', async () => {
-            assert.isRejected(notOwnerInstance.methods.update_migrations_count(566), "Owner require")
-        })
-
-        it('[NEGATIVE] Not owner should not update root hash', async () => {
-            assert.isRejected(notOwnerInstance.methods.update_root("566_root"), "Owner require")
+        //Skiping for now, if we all agree to remove the func I will also remove the tests
+        xit('[NEGATIVE] Not owner should not update root hash', async () => {
+            assert.isRejected(notOwnerInstance.methods.update_root("566_root", {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            }), "Owner require")
         })
     })
 
@@ -248,26 +310,52 @@ describe('Token Migration', async function () {
 
         beforeEach(async function () {
             await instance.deploy([tokenOwnerInfo.rootHash, 0], {
-                amount: 10 * 1000000000000000000
+                amount: 10 * 1000000000000000000,
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
             });
 
             let notOwnerKeyPair = await crypto.generateKeyPair();
-            tokenOwnerInfo.aeAddress = notOwnerKeyPair.publicKey;
+            tokenOwnerInfo.aeAddress = 'ak_2nz23cBQyQXKrCjUJ7UgiDoN9Fq8Co9m5zM99iYg9XMQtToWZi';
         })
 
         it('Should migrate tokens ', async () => {
 
-            await instance.methods.migrate(
+            let migrate = await instance.call("migrate", [
                 tokenOwnerInfo.tokens,
                 tokenOwnerInfo.aeAddress,
                 tokenOwnerInfo.leafIndex,
                 tokenOwnerInfo.siblings,
-                tokenOwnerInfo.ethAddr,
-                tokenOwnerInfo.ethAddr.substr(2),
-                tokenOwnerInfo.signature,
-                tokenOwnerInfo.hashedMsg);
+                tokenOwnerInfo.signature
+            ], {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
 
-            let response = await instance.methods.migrations_count()
+            // let migrate = await instance.methods.migrate(
+            //     tokenOwnerInfo.tokens,
+            //     tokenOwnerInfo.aeAddress,
+            //     tokenOwnerInfo.leafIndex,
+            //     tokenOwnerInfo.siblings,
+            //     tokenOwnerInfo.signature, {
+            //         backend: 'fate',
+            //         vmVersion: 5,
+            //         abiVersion: 3
+            //     });
+
+            // let response = await instance.methods.migrations_count({
+            //     backend: 'fate',
+            //     vmVersion: 5,
+            //     abiVersion: 3
+            // })
+
+            let response = await instance.call("migrations_count", [], {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            })
             assert.isOk(1 == response.decodedResult, "Migrations count is invalid")
         })
 
@@ -293,7 +381,11 @@ describe('Token Migration', async function () {
         // })
 
         it('[Negative] Should not migrate tokens if contract have not been funded', async () => {
-            await notFundedInstance.deploy([tokenOwnerInfo.rootHash, 0]);
+            await notFundedInstance.deploy([tokenOwnerInfo.rootHash, 0], {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
 
             try {
                 await notFundedInstance.methods.migrate(
@@ -301,21 +393,23 @@ describe('Token Migration', async function () {
                     tokenOwnerInfo.aeAddress,
                     tokenOwnerInfo.leafIndex,
                     tokenOwnerInfo.siblings,
-                    tokenOwnerInfo.ethAddr,
-                    tokenOwnerInfo.ethAddr.substr(2),
-                    tokenOwnerInfo.signature,
-                    tokenOwnerInfo.hashedMsg)
+                    tokenOwnerInfo.signature, {
+                        backend: 'fate',
+                        vmVersion: 5,
+                        abiVersion: 3
+                    });
+
 
                 assert.isOk(false, "Should not migrate tokens when contract is not funded")
             } catch (error) {
-                assert.isOk(error.message.includes('out_of_gas'), "Should not migrate tokens when contract is not funded");
+                assert.isOk(error.message.includes('Error in spend: insufficient_funds'), "Should not migrate tokens when contract is not funded");
             }
         })
 
 
-        it('[NEGATIVE] Should not reproduce same merkle tree root hash with invalid ehtereum address', async () => {
+        it('[NEGATIVE] Should not reproduce same merkle tree root hash with invalid signature, eth address is not in root', async () => {
 
-            const invalidEthAddr = '0x20b9BD8fBf8530E141e937D42F514305704bC4E2'.toUpperCase();
+            const invalidSignature = '2c43985fce5182c64f32e37cc452d0b869f1a3c1d6fae5624ed50d7cb3e011d062f92077b166c7551925bb39ce698b5c570538739a30ae6b3e8153092acca0c71c'
 
             try {
                 await instance.methods.migrate(
@@ -323,10 +417,11 @@ describe('Token Migration', async function () {
                     tokenOwnerInfo.aeAddress,
                     tokenOwnerInfo.leafIndex,
                     tokenOwnerInfo.siblings,
-                    invalidEthAddr,
-                    invalidEthAddr.substr(2),
-                    tokenOwnerInfo.signature,
-                    tokenOwnerInfo.hashedMsg)
+                    invalidSignature, {
+                        backend: 'fate',
+                        vmVersion: 5,
+                        abiVersion: 3
+                    })
 
                 assert.isOk(false, "Migrated has been passed with invalid ethereum address")
             } catch (error) {
@@ -342,10 +437,11 @@ describe('Token Migration', async function () {
                     tokenOwnerInfo.aeAddress,
                     tokenOwnerInfo.leafIndex,
                     tokenOwnerInfo.siblings,
-                    tokenOwnerInfo.ethAddr,
-                    tokenOwnerInfo.ethAddr.substr(2),
-                    tokenOwnerInfo.signature,
-                    tokenOwnerInfo.hashedMsg)
+                    tokenOwnerInfo.signature, {
+                        backend: 'fate',
+                        vmVersion: 5,
+                        abiVersion: 3
+                    })
 
                 assert.isOk(false, "Migrated has been passed with invalid token amount")
             } catch (error) {
@@ -373,10 +469,11 @@ describe('Token Migration', async function () {
                     tokenOwnerInfo.aeAddress,
                     tokenOwnerInfo.leafIndex,
                     invalidSiblings,
-                    tokenOwnerInfo.ethAddr,
-                    tokenOwnerInfo.ethAddr.substr(2),
-                    tokenOwnerInfo.signature,
-                    tokenOwnerInfo.hashedMsg)
+                    tokenOwnerInfo.signature, {
+                        backend: 'fate',
+                        vmVersion: 5,
+                        abiVersion: 3
+                    })
 
                 assert.isOk(false, "Migrated has been passed with invalid merkle tree siblings")
             } catch (error) {
@@ -392,10 +489,11 @@ describe('Token Migration', async function () {
                     tokenOwnerInfo.aeAddress,
                     1,
                     tokenOwnerInfo.siblings,
-                    tokenOwnerInfo.ethAddr,
-                    tokenOwnerInfo.ethAddr.substr(2),
-                    tokenOwnerInfo.signature,
-                    tokenOwnerInfo.hashedMsg)
+                    tokenOwnerInfo.signature, {
+                        backend: 'fate',
+                        vmVersion: 5,
+                        abiVersion: 3
+                    })
 
                 assert.isOk(false, "Migrated has been passed with invalid merkle tree leaf index")
             } catch (error) {
@@ -411,10 +509,11 @@ describe('Token Migration', async function () {
                 tokenOwnerInfo.aeAddress,
                 tokenOwnerInfo.leafIndex,
                 tokenOwnerInfo.siblings,
-                tokenOwnerInfo.ethAddr,
-                tokenOwnerInfo.ethAddr.substr(2),
-                tokenOwnerInfo.signature,
-                tokenOwnerInfo.hashedMsg);
+                tokenOwnerInfo.signature, {
+                    backend: 'fate',
+                    vmVersion: 5,
+                    abiVersion: 3
+                });
 
             try {
                 await instance.methods.migrate(
@@ -422,17 +521,22 @@ describe('Token Migration', async function () {
                     tokenOwnerInfo.aeAddress,
                     tokenOwnerInfo.leafIndex,
                     tokenOwnerInfo.siblings,
-                    tokenOwnerInfo.ethAddr,
-                    tokenOwnerInfo.ethAddr.substr(2),
-                    tokenOwnerInfo.signature,
-                    tokenOwnerInfo.hashedMsg)
+                    tokenOwnerInfo.signature, {
+                        backend: 'fate',
+                        vmVersion: 5,
+                        abiVersion: 3
+                    })
 
                 assert.isOk(false, "Migrated has been passed with same ethereum address")
             } catch (error) {
                 assert.isOk(error.message.includes('This account has already transferred its tokens'), "Error message is not that should be. Should not be able to migrate twice same ethereum address");
             }
 
-            let response = await instance.methods.migrations_count()
+            let response = await instance.methods.migrations_count({
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            })
             assert.isOk(1 == response.decodedResult, "Migrations count is invalid")
         })
 
@@ -443,51 +547,66 @@ describe('Token Migration', async function () {
                 tokenOwnerInfo.aeAddress,
                 tokenOwnerInfo.leafIndex,
                 tokenOwnerInfo.siblings,
-                tokenOwnerInfo.ethAddr,
-                tokenOwnerInfo.ethAddr.substr(2),
-                tokenOwnerInfo.signature,
-                tokenOwnerInfo.hashedMsg);
+                tokenOwnerInfo.signature, {
+                    backend: 'fate',
+                    vmVersion: 5,
+                    abiVersion: 3
+                });
 
             let randomKeyPair = await crypto.generateKeyPair();
             anotherTokenOwnerInfo.aeAddress = randomKeyPair.publicKey;
 
             await instance.methods.migrate(
                 anotherTokenOwnerInfo.tokens,
-                anotherTokenOwnerInfo.aeAddress,
+                anotherKeyPair.publicKey,
                 anotherTokenOwnerInfo.leafIndex,
                 anotherTokenOwnerInfo.siblings,
-                anotherTokenOwnerInfo.ethAddr,
-                anotherTokenOwnerInfo.ethAddr.substr(2),
-                anotherTokenOwnerInfo.signature,
-                anotherTokenOwnerInfo.hashedMsg);
+                anotherTokenOwnerInfo.signature, {
+                    backend: 'fate',
+                    vmVersion: 5,
+                    abiVersion: 3
+                });
 
-            let response = await instance.methods.migrations_count();
+            let response = await instance.methods.migrations_count({
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
             assert.isOk(2 == response.decodedResult, "Migrations count is invalid");
 
-            response = await instance.methods.is_migrated(tokenOwnerInfo.ethAddr);
+            response = await instance.methods.is_migrated(tokenOwnerInfo.ethAddr, {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
             assert.isOk(response.decodedResult, "Eth address should be migrated");
 
-            response = await instance.methods.is_migrated(anotherTokenOwnerInfo.ethAddr);
+            response = await instance.methods.is_migrated(anotherTokenOwnerInfo.ethAddr, {
+                backend: 'fate',
+                vmVersion: 5,
+                abiVersion: 3
+            });
             assert.isOk(response.decodedResult, "Eth address should be migrated");
         })
 
         // // negative pass invalid hashed msg
-        it("[NEGATIVE] Should not migrate with invalid hashed message", async () => {
+        it("[NEGATIVE] Should not migrate with invalid aeternity address", async () => {
 
             try {
                 await instance.methods.migrate(
                     tokenOwnerInfo.tokens,
-                    tokenOwnerInfo.aeAddress,
+                    "ak_ZLqPe9J2qenismR9FoJ93zJs8To91LQH9iVb2X4HRkRKMpxXt",
                     tokenOwnerInfo.leafIndex,
                     tokenOwnerInfo.siblings,
-                    tokenOwnerInfo.ethAddr,
-                    tokenOwnerInfo.ethAddr.substr(2),
-                    tokenOwnerInfo.signature,
-                    "AA52c9b9140222b08593a26daa782707297be9f7b3e8281d7b4974769f19afd0")
+                    tokenOwnerInfo.signature, {
+                        backend: 'fate',
+                        vmVersion: 5,
+                        abiVersion: 3
+                    })
 
                 assert.isOk(false, "Migrated has been passed with invalid hashed message")
             } catch (error) {
-                assert.isOk(error.message.includes('Mismatch between passed eth address and recovered one'), "Error message is not that should be. Should not be able to recover ethereum address");
+                assert.isOk(error.message.includes('From provided data, cannot be generated same root'), "Error message is not that should be. Should not be able to recover ethereum address");
             }
         })
 
@@ -500,14 +619,15 @@ describe('Token Migration', async function () {
                     tokenOwnerInfo.aeAddress,
                     tokenOwnerInfo.leafIndex,
                     tokenOwnerInfo.siblings,
-                    tokenOwnerInfo.ethAddr,
-                    tokenOwnerInfo.ethAddr.substr(2),
-                    "1b2ed7455938efdaa0709d8de24eba5b62dd2f035e82e7e46ff0a104972ec2266402663f8cbab895cc0791303c566c29b770d6730f077361b82d37b4c18987653e",
-                    tokenOwnerInfo.hashedMsg)
+                    "1b2ed7455938efdaa0709d8de24eba5b62dd2f035e82e7e46ff0a104972ec2266402663f8cbab895cc0791303c566c29b770d6730f077361b82d37b4c18987653e", {
+                        backend: 'fate',
+                        vmVersion: 5,
+                        abiVersion: 3
+                    })
 
                 assert.isOk(false, "Migrated has been passed with invalid signature")
             } catch (error) {
-                assert.isOk(error.message.includes('Mismatch between passed eth address and recovered one'), "Error message is not that should be. Should not be able to recover ethereum address");
+                assert.isOk(error.message.includes('From provided data, cannot be generated same root'), "Error message is not that should be. Should not be able to recover ethereum address");
             }
         })
     })
