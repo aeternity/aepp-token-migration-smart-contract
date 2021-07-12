@@ -1,3 +1,5 @@
+include "String.aes"
+
 contract TokenMigration =
 
     datatype event = Migrated(string, address, int)
@@ -18,7 +20,6 @@ contract TokenMigration =
         { root_hash = root_hash,
           migrations_count = count,
           map_transfered_accounts = {} }
-
 
     /*
     token_amount - the amount of tokens that the user will migrate
@@ -50,7 +51,6 @@ contract TokenMigration =
         Chain.event(Migrated(recovered_eth_address_string, ae_address, token_amount))
 
         state.migrations_count
-
 
     function get_signer(msg_hash: hash, sig: bytes(65)) =
         Crypto.ecrecover_secp256k1(msg_hash, sig)
